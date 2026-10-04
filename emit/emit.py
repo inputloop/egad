@@ -314,7 +314,10 @@ def main(tokens_path, dist):
         raise SystemExit("emit: the gate failed; nothing written")
     t, themes, raw, usage, resolved, alias_of = load(tokens_path)
     dist = pathlib.Path(dist)
-    w = lambda rel, text: (dist / rel).parent.mkdir(parents=True, exist_ok=True) or (dist / rel).write_text(text) or print("wrote", dist / rel)
+    def w(rel, text):
+        (dist / rel).parent.mkdir(parents=True, exist_ok=True)
+        (dist / rel).write_text(text)
+        print("wrote", dist / rel)
 
     css = css_tokens(t, themes, raw, resolved, alias_of)
     w("css/egad-tokens.css", css)
