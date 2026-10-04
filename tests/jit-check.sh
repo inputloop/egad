@@ -13,7 +13,7 @@ python3 "$here/jit/unpack.py" "$here/jit/treatments/await.org" --out "$tmp/py" >
 
 echo "--- org-babel-tangle (Emacs)"
 cp "$here/jit/treatments/await.org" "$tmp/org/await.org"
-emacs --batch -Q --eval "(progn (require 'org) (require 'ob-tangle)
+"${EMACS:-emacs}" --batch -Q --eval "(progn (require 'org) (require 'ob-tangle)
   (setq org-confirm-babel-evaluate nil org-babel-tangle-use-relative-file-links nil)
   (org-babel-tangle-file \"$tmp/org/await.org\"))" >"$tmp/org.log" 2>&1 || { tail -5 "$tmp/org.log"; fail "org tangle"; }
 

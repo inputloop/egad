@@ -1,0 +1,18 @@
+* Call the plumber
+:PROPERTIES:
+:kind: agenda
+:visibility: open
+:priority: 2
+:note: "42"
+:empty: ""
+:padded: " leading space"
+:quoted: "\"already quoted\""
+:END:
+* Feeling about the week
+:PROPERTIES:
+:kind: mood
+:visibility: closed
+:share: nil
+:remember-choice+: "team-board"
+:END:
+** a sub-item has no props

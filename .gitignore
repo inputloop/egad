@@ -5,3 +5,6 @@ tests/tmp-run.log
 *.elc
 *.html
 !jit/index.html
+
+# the house side: internal model, sensitivity file, verbatim prompts, copied personal data (never public)
+.house/

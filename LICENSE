@@ -1,21 +1,19 @@
-egad -- license not yet chosen
+egad -- licence
 
-The author has not yet chosen a license for this repository.  Until a LICENSE
-file with actual license text replaces this note, all rights are reserved and the
-repository is not offered for redistribution.
+Code (every program, script, stylesheet, Emacs Lisp file and tangled form): GNU General Public License, version 3
+or (at your option) any later version.  The full text is in COPYING.
 
-What is on the table (the author's stated lean is the first):
+Prose (README.org, MODEL.org, GOVERNANCE.org, NAMES.org, CONTRIBUTING.org, the other .org documents, and the
+prose parts of literate sources): Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0),
+<https://creativecommons.org/licenses/by-sa/4.0/>.
 
-  GPL-3.0-or-later   matches GNU Emacs and the Modus themes the colour values come
-                     from; forks of AGPL, Apache-2.0, LGPL and MPL-2.0 platforms can
-                     carry this code; proprietary products cannot ship it.
-  Apache-2.0 / MIT   maximum reach, including into closed products; no copyleft.
-  Dual               both of the above, the recipient chooses.
+Chosen by the author 2026-10-04 ("our usual GPLv3+/CCBY-SA").
 
-Third-party material already present:
-  - Colour values in tokens/egad-tokens.json are reproduced from GNU Emacs's Modus
-    themes (GPL-3.0-or-later, Protesilaos Stavrou), as data.
-  - Everything else in this repository is original.
+Copyright (C) 2026 Corwin Brust <corwin@bru.st>.
 
-Contributions sent to other projects (Nextcloud, Element, GNU Emacs, ...) go under
-each project's own license; contributors keep their copyright.
+Third-party material:
+  - Colour values in tokens/egad-tokens.json are reproduced from GNU Emacs's Modus themes
+    (GPL-3.0-or-later, Protesilaos Stavrou), as data.  GPL-3.0-or-later is the same licence as egad's code.
+
+Contributions sent to other projects (Nextcloud, Element, GNU Emacs, ...) go under each project's own licence;
+contributors keep their copyright.

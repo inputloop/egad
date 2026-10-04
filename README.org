@@ -75,9 +75,16 @@ the signing key they publish is the one you pinned.
 | =archive/=                | =make-archive.py=, =egad-node.py=, config examples, README  |
 | =net/=                    | firewall hints per OS, a WireGuard peer example             |
 | =jit/=                    | egadjit: =unpack.py=, =resolve.py=, =egadjit.el=, treatments |
+| =decl/=                   | the declarative layer: Org drawers ⇄ JSON (Python) ⇄ plists (Emacs Lisp) |
+| =hello/=                  | hello-egad, the smallest literate application               |
 | =gallery/=                | the theme catalogue (format decided, generator not yet)     |
 | =tests/=                  | every claim above, as a runnable check                      |
 | =dist/=                   | generated; never edited, never committed                    |
+
+* The model
+
+=MODEL.org= is the public model: what egad is for, the minimax rule, the declarative layer, verification at two
+grains (instance and package), hello-egad, and the planned organising proof.
 
 * Status, honestly
 
@@ -85,7 +92,10 @@ Done and tested here: the token gate (32 pair×theme checks, two implementations
 two languages), both Emacs themes load, the org export picks up the theme, a signed
 archive is installed by a real Emacs with =package-check-signature 'all= and refused
 when tampered, two nodes report mutual trust from both sides, seven jit forms tangle
-identically from Python and from Org, the resolver's four documented outcomes hold.
+identically from Python and from Org, the resolver's four documented outcomes hold.  Since 2026-10-04: the declarative layer's two readers (Python
+and Emacs Lisp, sharing no parser) agree on every example and refuse the same bad files, and hello-egad tangles
+identically from both tanglers, names only real tokens, and says what its keys say (=tests/decl-check.sh=,
+=tests/hello-check.sh=, each with =--prove-red=).
 
 Not yet: the Nextcloud and Element adapters are generated from each project's
 documented variable names but have not been loaded into a live instance; the KDE
@@ -97,5 +107,5 @@ observation to reproduce on your own Emacs build is recorded in
 
 * License
 
-Not yet chosen: see =LICENSE=.  Until it is, this repository is not for
-redistribution.  The Modus colour values are data from a GPL-3.0-or-later work.
+Code: GPL-3.0-or-later (=COPYING=).  Prose: CC BY-SA 4.0.  See =LICENSE=.  The Modus
+colour values are data from a GPL-3.0-or-later work.  =MODEL.org= is the public model.

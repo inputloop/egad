@@ -1,0 +1,102 @@
+#+TITLE: hello-egad: the smallest literate application
+#+PROPERTY: header-args :mkdirp yes
+
+This one file is the whole application, and it is read three ways.  A person reads it top to bottom.  Either
+tangler (=jit/unpack.py=, or =org-babel-tangle= in Emacs) writes its source blocks out as a web page and an Emacs
+command.  The declarative layer (=decl/=) reads its property drawers as data: the greeting below is a headline
+with keys, and both the page and the command say what it says.  =tests/hello-check.sh= proves all three agree.
+
+It is deliberately small.  Its author has the real test written on a card; when that arrives, this file changes to
+pass it.
+
+* greeting
+:PROPERTIES:
+:text: Hello, egad
+:await-message: Waiting for a peer…
+:done-message: Ready: the tokens, the forms and the layer agree.
+:theme: operandi
+:END:
+
+The data.  Everything the application says comes from these keys.  Change =text= here and the check fails until the
+page says the same.
+
+* The page
+
+A page styled only by egad tokens: body text is =text= on =canvas=, the heading uses the variable-pitch stack, and
+the status line at the bottom is the AWAIT /echo/ treatment, the baseline that suits everyone.  It loads the token
+stylesheet and the echo form from where a node serves them (=../css/=, =../jit/await/=).
+
+#+BEGIN_SRC html :tangle hello.html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hello-egad</title>
+<link rel="stylesheet" href="../css/egad-tokens.css">
+<link rel="stylesheet" href="../jit/await/echo.css">
+<link rel="stylesheet" href="hello.css">
+</head>
+<body>
+<main>
+<h1 data-egad-greeting>Hello, egad</h1>
+<p>This page was written as an Org file. Its colours, type and spacing are egad tokens, traced to the Modus themes
+of GNU Emacs.</p>
+</main>
+<footer data-egad-await></footer>
+<script src="../jit/await/echo.js"></script>
+<script src="hello.js"></script>
+</body>
+</html>
+#+END_SRC
+
+The page's own stylesheet names only tokens.  =tests/hello-check.sh= fails if it names one that does not exist.
+
+#+BEGIN_SRC css :tangle hello.css
+body { margin: 0; background: var(--egad-canvas); color: var(--egad-text);
+       font-family: var(--egad-font-variable); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; padding: var(--egad-space-8) var(--egad-space-6); max-width: 60ch; }
+h1 { font-size: 28px; line-height: 36px; margin: 0 0 var(--egad-space-4); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--egad-focus-ring); outline-offset: 2px; }
+#+END_SRC
+
+The script shows the waiting message, then the done message.  It honours nothing more than echo needs, because echo
+cannot be refused.
+
+#+BEGIN_SRC js :tangle hello.js
+// hello-egad: say we are waiting, then say we are ready (the AWAIT echo treatment).
+(function () {
+  const echo = window.egadAwait && window.egadAwait.echo;
+  if (!echo) return;
+  echo.begin("Waiting for a peer…");
+  setTimeout(function () { echo.end("Ready: the tokens, the forms and the layer agree."); }, 600);
+})();
+#+END_SRC
+
+* The Emacs command
+
+=M-x hello-egad= reads the greeting through the declarative layer's Emacs Lisp reader and says it in the echo
+area, the place AWAIT's echo treatment copies.  It needs =decl/egad-decl.el= on the load path.
+
+#+BEGIN_SRC emacs-lisp :tangle hello-egad.el
+;;; hello-egad.el --- say the greeting from hello-egad.org  -*- lexical-binding: t; -*-
+;; Tangled from hello/hello-egad.org; edit that file, not this one.  GPL-3.0-or-later.
+(require 'egad-decl)
+
+(defvar hello-egad-source nil
+  "The hello-egad.org file to read the greeting from.")
+
+(defun hello-egad-greeting (&optional file)
+  "Return the greeting text from FILE (default `hello-egad-source'), via the declarative layer."
+  (let* ((text (with-temp-buffer (insert-file-contents (or file hello-egad-source)) (buffer-string)))
+         (node (seq-find (lambda (n) (equal (gethash "title" n) "greeting")) (egad-decl-parse text))))
+    (plist-get (egad-decl-to-plist node) :text)))
+
+(defun hello-egad (&optional file)
+  "Say the hello-egad greeting in the echo area."
+  (interactive)
+  (message "%s" (hello-egad-greeting file)))
+
+(provide 'hello-egad)
+;;; hello-egad.el ends here
+#+END_SRC

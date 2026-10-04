@@ -1,0 +1,110 @@
+#+TITLE: egad — the model
+#+SUBTITLE: what we are building, why, and how the parts fit
+#+AUTHOR: Corwin Brust <corwin@bru.st>, with Claude (Cowork)
+#+LANGUAGE: en
+#+OPTIONS: toc:2 num:nil
+
+This is egad's public model: anyone may read, share and adapt it under CC BY-SA 4.0.  The code it describes is
+GPL-3.0-or-later.  The house keeps a fuller internal model, and a list of the places that need care (people's data,
+network details); this file says those places exist and what the rules are, without the specifics.
+
+* What egad is
+
+egad is a design system rooted in GNU Emacs, and the plumbing to share it.  Its one claim: *the look you choose in
+Emacs should follow you to every surface you use, and the tools that draw those surfaces should be as readable,
+checkable and shareable as Emacs packages are.*
+
+| layer | what it is | where |
+|---+---+---|
+| tokens | Modus operandi/vivendi colours under their Modus names, a semantic layer (=canvas=, =text=, =link=, =todo=, =focus-ring=, ...), fixed and variable pitch type, spacing, radius | =tokens/= |
+| the gate | measures 32 colour pairs per theme against floors: 7:1 body text, 4.5:1 text in panels, 3:1 controls and focus rings; two implementations (Python, Emacs Lisp) | =tokens/tokens_check.py=, =tests/egad-tokens-test.el= |
+| derivations | CSS, an org-html theme, two Emacs themes (ELPA packages), Nextcloud/Element/KDE adapters | =emit/= |
+| the archive node | an ELPA directory served with discovery at =/.well-known/egad=, a published signing key, and a mutual peer check | =archive/= |
+| egadjit | literate tools: an Org file is the tool; two tanglers must agree; a resolver chooses a UI treatment per viewer | =jit/= |
+| the declarative layer | Org property drawers ⇄ Emacs Lisp plists ⇄ JSON, both ways, over a stated subset | =decl/= |
+| hello-egad | the smallest literate app that runs the whole pipeline | =hello/= |
+
+* Principles
+
+- *Start from Emacs and Org.*  Org already names what an interface needs: headline, TODO keyword, priority, tag,
+  timestamp, table, source block, drawer.
+- *Measure, don't assert.*  Every claim in a README has a check; an important check has a second implementation in
+  a second language.
+- *Trust is visible.*  Transport (TLS, WireGuard) says whom you are talking to; a signature says who made a thing.
+  Turning either off is allowed where it is safe, and is always a recorded decision, never a silent default.
+- *Checks are few, necessary, and easy to switch off.*  A check that guards a promise to a person stays on; any
+  other check has a named off switch and says "not checked" when off.
+- *Preferences stay with the person.*  Viewer files (constraints such as reduced motion or a screen reader, and a
+  preference order) never leave the device.
+
+* The minimax rule (AWAIT, the first category)
+
+A /category/ is something an interface must do; AWAIT is "show that the page is waiting".  It has four
+/treatments/: echo (one line in a status bar), progress, pulse, spinner.  When a screen is drawn, the resolver
+reads the viewer files of everyone looking and picks, among the treatments acceptable to all, *the one that ranks
+best for the person it ranks worst for*.  A viewer who asked for reduced motion removes the spinner; a screen-reader
+user removes pulse and spinner.  Echo can never be removed: it is the baseline, so there is always an answer.
+
+* The declarative layer
+
+Each thing egad exchanges (a form, a treatment, a viewer, an agenda item, a request between users) is an Org
+headline whose property drawer holds its keys.  It maps two ways:
+
+- to Emacs Lisp: a plist, read and written by Org's own property functions;
+- to JSON: an object, read and written by a small standard-library Python program.
+
+The mapping is exact over a stated subset: keys are lower-case words with hyphens; values are strings, integers,
+booleans and space-separated lists of those; nesting is a sub-headline, never a nested value.  Anything outside the
+subset is refused, not guessed.  The check: the Python and Emacs Lisp readers turn the same file into identical
+JSON, and JSON → Org → JSON is the identity.
+
+* Verification, at two grains
+
+| grain | what | the floor | the default | switch |
+|---+---+---+---+---|
+| instance: a running node at a host and port, maybe a name | that you reached the node you meant | TLS, or a WireGuard peer key, for anything that serves tool forms | TLS with a name; peers list each other and their keys match the pins | none for tool forms |
+| package: a release or a form | that the bytes are what their author made | none mandatory for ELPA packages | every release signed; receivers check signatures | per source and per package, in the receiver's acceptance file |
+
+The /acceptance file/ lives with the receiver, like a viewer file.  One entry per source says =accept: signed=,
+=tls-only= (an unsigned package is accepted from a node whose instance check passed) or =named= (this author, by
+name, at the receiver's word), with a =why=.  So someone may accept packages from people who do not sign, knowingly
+and on the record.
+
+* hello-egad
+
+The smallest literate application that exercises everything: one Org file that tangles, with either tangler, into a
+page styled only by egad tokens with an AWAIT echo, an Emacs command that greets in egad's faces, and a JSON greeting
+through the declarative layer.  =tests/hello-check.sh= proves the tangles agree and the page names only tokens that
+exist.  It will grow to pass the test its author has written on a card.
+
+* The next proof: organising for a few people
+
+A planned run of about ninety days, three people, mostly on phones, over a WireGuard-protected network.
+
+- One container per registered, approved beta user, each running that user's own Emacs.  A container's contents
+  belong to its user.
+- A separate set of orgvm services (Org documents served by Emacs in batch) carries signals between containers and
+  any calculation that spans users.
+- A container can /knock/: tell another that an assertion from it is needed for someone's pending work; the person
+  sees it as AWAIT.
+- Every "sure, push it" is recorded at about the same time in the shared context and in the user's own context, with
+  enough detail that two other readers, each given different records of the same event, would reach similar
+  conclusions.
+- Two kinds of personal data with opposite defaults:
+  - AGENDA (anyone's TODOs) is /normally open/: discoverable unless marked private, or the person changes their
+    default;
+  - MOOD is /normally closed/: off until the person opts in, then a confirm on each publish and each attach.  A
+    confirm can be remembered per destination, so the same share does not ask twice.
+- The look: Modus operandi by default; community palettes as a menu over agenda views, items and shared documents,
+  each palette measured by the gate before it is offered.
+- The hypothesis: when a person shares context about how they feel about their work, human and machine helpers
+  choose better what to help with.  Success: all three people want to keep using what comes out.
+
+* Status
+
+See =README.org= ("Status, honestly").  The declarative layer and hello-egad are new (2026-10-04) and run without
+Emacs for their Python half; the Emacs half is checked where Emacs is installed.
+
+-----
+Copyright (C) 2026 Corwin Brust <corwin@bru.st>.  This document is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International licence (CC BY-SA 4.0), <https://creativecommons.org/licenses/by-sa/4.0/>.

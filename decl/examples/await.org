@@ -1,0 +1,33 @@
+#+TITLE: AWAIT, as the declarative layer sees it
+
+* await
+:PROPERTIES:
+:category: await
+:baseline: echo
+:order+: echo
+:order+: progress
+:order+: pulse
+:order+: spinner
+:END:
+Prose under a headline is for people; the layer carries keys only.
+** echo
+:PROPERTIES:
+:motion: nil
+:announces: t
+:forms+: await/echo.css
+:forms+: await/echo.js
+:END:
+** spinner
+:PROPERTIES:
+:motion: t
+:announces: nil
+:forms+: await/spinner.css
+:END:
+* viewer
+:PROPERTIES:
+:viewer: alice
+:reduced-motion: t
+:screen-reader: nil
+:prefer-await+: echo
+:prefer-await+: pulse
+:END:

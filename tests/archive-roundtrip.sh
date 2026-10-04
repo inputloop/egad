@@ -8,9 +8,13 @@
 # Exit 0 only when every step passed.
 set -eu
 here=$(cd "$(dirname "$0")/.." && pwd)
-tmp="$here/tests/tmp"; rm -rf "$tmp"; mkdir -p "$tmp/tls" "$tmp/gnupg" "$tmp/emacs-gnupg" "$tmp/site-trusted/jit"
-chmod 700 "$tmp/gnupg" "$tmp/emacs-gnupg"
-export GNUPGHOME="$tmp/gnupg"
+tmp="$here/tests/tmp"; rm -rf "$tmp"; mkdir -p "$tmp/tls" "$tmp/site-trusted/jit"
+# The two GnuPG homes live outside the tree, in the system temp dir: gpg needs real lock files and an agent
+# socket, which a network or FUSE-mounted working tree may refuse (seen 2026-10-04 on a mounted Windows folder:
+# "can't allocate lock", "No agent running").  EGAD_GNUPG_TMP names another place.
+gtmp=$(mktemp -d "${EGAD_GNUPG_TMP:-${TMPDIR:-/tmp}}/egad-gnupg.XXXXXX") || exit 1
+mkdir -p "$gtmp/gnupg" "$gtmp/emacs-gnupg"; chmod 700 "$gtmp/gnupg" "$gtmp/emacs-gnupg"
+export GNUPGHOME="$gtmp/gnupg"
 PASS=0; fail() { echo "FAIL: $*" >&2; exit 1; }
 step() { echo "--- $*"; }
 
@@ -70,7 +74,7 @@ EOF
 echo '{"egad-jit":1,"forms":[]}' > "$tmp/site-trusted/jit/jit-index.json"
 python3 "$here/archive/egad-node.py" serve "$tmp/public.conf"  >"$tmp/public.log"  2>&1 & P1=$!
 python3 "$here/archive/egad-node.py" serve "$tmp/trusted.conf" >"$tmp/trusted.log" 2>&1 & P2=$!
-trap 'kill $P1 $P2 2>/dev/null || true' EXIT INT TERM
+trap 'kill $P1 $P2 2>/dev/null || true; gpgconf --homedir "$gtmp/gnupg" --kill gpg-agent 2>/dev/null; rm -rf "$gtmp"' EXIT INT TERM
 for i in 1 2 3 4 5 6 7 8 9 10; do curl -fsk https://127.0.0.1:8443/healthz >/dev/null 2>&1 && curl -fs http://127.0.0.1:8444/healthz >/dev/null 2>&1 && break; sleep 0.3; done
 
 echo | openssl s_client -connect 127.0.0.1:8443 -CAfile "$tmp/tls/cert.pem" -verify_return_error 2>&1 | grep -q 'Verify return code: 0' || fail "openssl cannot verify the node certificate"
@@ -88,11 +92,11 @@ python3 "$here/archive/egad-node.py" check-peers "$tmp/trusted.conf"
 
 step "7 Emacs installs a theme from the archive with signature checking on"
 # a proxy in the environment would swallow 127.0.0.1; url.el honours no_proxy
-no_proxy=127.0.0.1,localhost NO_PROXY=127.0.0.1,localhost emacs --batch -Q --eval "(progn
+no_proxy=127.0.0.1,localhost NO_PROXY=127.0.0.1,localhost "${EMACS:-emacs}" --batch -Q --eval "(progn
   (require 'package) (require 'url) (setq url-proxy-services nil)
   (setq user-emacs-directory \"$tmp/emacs.d/\"
         package-user-dir \"$tmp/emacs.d/elpa/\"
-        package-gnupghome-dir \"$tmp/emacs-gnupg/\"
+        package-gnupghome-dir \"$gtmp/emacs-gnupg/\"
         package-check-signature 'all
         package-archives '((\"egad\" . \"https://127.0.0.1:8443/elpa/\"))
         ;; NOTE: url.el in Emacs 29.3 (Debian build, GnuTLS) returned no connection at all
@@ -116,9 +120,9 @@ grep -q '^installed egad-operandi-theme-0.1.0; default bg=#ffffff org-todo=#a600
 
 step "7b a tampered archive is refused"
 printf ' ' >> "$here/dist/site/elpa/archive-contents"
-no_proxy=127.0.0.1,localhost emacs --batch -Q --eval "(progn
+no_proxy=127.0.0.1,localhost "${EMACS:-emacs}" --batch -Q --eval "(progn
   (require 'package) (require 'url) (setq url-proxy-services nil)
-  (setq package-user-dir \"$tmp/emacs.d/elpa2/\" package-gnupghome-dir \"$tmp/emacs-gnupg/\"
+  (setq package-user-dir \"$tmp/emacs.d/elpa2/\" package-gnupghome-dir \"$gtmp/emacs-gnupg/\"
         package-check-signature 'all package-archives '((\"egad\" . \"https://127.0.0.1:8443/elpa/\"))
         network-security-level 'low)
   (package-initialize)

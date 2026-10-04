@@ -1,0 +1,5 @@
+* bad
+:PROPERTIES:
+:a: 1
+:a: 2
+:END:
