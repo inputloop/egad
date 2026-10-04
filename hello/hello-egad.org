@@ -64,6 +64,7 @@ The script shows the waiting message, then the done message.  It honours nothing
 cannot be refused.
 
 #+BEGIN_SRC js :tangle hello.js
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-3.0-or-later
 // hello-egad: say we are waiting, then say we are ready (the AWAIT echo treatment).
 (function () {
   const echo = window.egadAwait && window.egadAwait.echo;
@@ -71,6 +72,7 @@ cannot be refused.
   echo.begin("Waiting for a peer…");
   setTimeout(function () { echo.end("Ready: the tokens, the forms and the layer agree."); }, 600);
 })();
+// @license-end
 #+END_SRC
 
 * The Emacs command
