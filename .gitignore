@@ -8,3 +8,5 @@ tests/tmp-run.log
 
 # the house side: internal model, sensitivity file, verbatim prompts, copied personal data (never public)
 .house/
+__pycache__/
+*.pyc
