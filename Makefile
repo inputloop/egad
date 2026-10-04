@@ -38,6 +38,7 @@ check: gate
 	EMACS="$(EMACS)" sh tests/jit-check.sh
 	EMACS="$(EMACS)" sh tests/decl-check.sh
 	EMACS="$(EMACS)" sh tests/hello-check.sh
+	EMACS="$(EMACS)" sh tests/organize-check.sh
 	@echo; echo "ALL CHECKS PASSED"
 
 # Everything that runs without Emacs (and without a network): the gate, the emitters, the declarative layer's
@@ -47,6 +48,7 @@ check-noemacs: gate
 	$(PY) emit/emit.py >/dev/null
 	EMACS=/nonexistent sh tests/decl-check.sh
 	EMACS=/nonexistent sh tests/hello-check.sh
+	EMACS=/nonexistent sh tests/organize-check.sh
 
 serve-public:
 	$(PY) archive/egad-node.py serve egad-node.conf

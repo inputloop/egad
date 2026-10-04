@@ -6,8 +6,8 @@ tangler (=jit/unpack.py=, or =org-babel-tangle= in Emacs) writes its source bloc
 command.  The declarative layer (=decl/=) reads its property drawers as data: the greeting below is a headline
 with keys, and both the page and the command say what it says.  =tests/hello-check.sh= proves all three agree.
 
-It is deliberately small.  Its author has the real test written on a card; when that arrives, this file changes to
-pass it.
+It is deliberately small.  Its author's test card (item 3: "ORG is floor as CORWIN NEEDS at CEILING") arrived the
+same day; the last section, "The organiser: card 3", is that test, and =tests/organize-check.sh= holds it.
 
 * greeting
 :PROPERTIES:
@@ -99,4 +99,226 @@ area, the place AWAIT's echo treatment copies.  It needs =decl/egad-decl.el= on 
 
 (provide 'hello-egad)
 ;;; hello-egad.el ends here
+#+END_SRC
+
+* The organiser: card 3
+
+His card, item 3: /ORG is floor as CORWIN NEEDS at CEILING/, with seven limbs off one stem: AGENDA (→ PMO), MOOD
+(↔ EPMO), [VM], [CAPTURE], [INTERN], [REFILE], and TRACKS (LOG) with a double arrow.  Read here as: Org is the least
+the organiser is built on, and one person's needs are the most it is built to; bracketed words are operations, the
+others are stores; one arrow is one way, two are both ways.
+
+Each limb, and what this file gives it:
+
+- *AGENDA → PMO.*  TODOs, /normally open/: a new item is discoverable unless it is marked private or the person has
+  changed their default (=default-agenda= in =choices.org=).  =pmo= prints rows in the PMO ledger's =todos.tsv= shape
+  (=id project state priority tags text=), one way.
+- *MOOD ↔ EPMO.*  Moods, /normally closed/: a new mood is never shared.  Sharing needs an opt-in first, then a confirm
+  for each destination, or a remembered yes for that destination ("remember my choice").  =epmo export= gives only
+  what was shared with that destination; =epmo import= takes another person's export in, both ways.
+- *[VM].*  =view who=...= says what a given person sees: everything for oneself; open agenda items and moods shared
+  with them for anyone else.  (orgvm serves the same view as a page; this is the reading it serves.)
+- *[CAPTURE]* adds an item; *[REFILE]* moves one under another; *[INTERN]* brings a word into this person's
+  registry with its frame.
+- *TRACKS (LOG), both ways.*  Every command writes one track (a headline in =tracks.org=, in the declarative layer's
+  subset) and then applies it.  =replay= rebuilds every other file from the tracks alone and says whether they match:
+  a file changed outside the tracks is found.  So the log and the files are two readers of one history, and any two
+  people given the same tracks reach the same files.
+
+The program is Python, standard library only, and reads and writes Org through =decl/egad-decl.py=.
+
+#+BEGIN_SRC python :tangle egad-org.py
+#!/usr/bin/env python3
+# egad-org.py -- hello-egad's organiser: Org is the floor; the card's seven limbs, as commands.
+# Tangled from hello/hello-egad.org; edit that file, not this one.  GPL-3.0-or-later.
+#
+# A person's directory holds five Org files, all in the declarative layer's subset (decl/):
+#   agenda.org  TODOs; normally OPEN (discoverable unless marked private)        AGENDA  (-> PMO)
+#   mood.org    moods; normally CLOSED (shared only after opt-in and a confirm)  MOOD    (<-> EPMO)
+#   tags.org    words this person has interned, each with its frame             [INTERN]
+#   choices.org remembered answers ("remember my choice"), one per intersection
+#   tracks.org  every operation, appended, never edited                          TRACKS (LOG), both ways
+# Every command writes one track and then applies it; `replay` rebuilds the other files from the tracks alone and
+# says whether they match.  So the log and the files are two readers of one history.
+import json, os, sys
+
+DECL = os.environ.get('EGAD_DECL') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'decl')
+sys.path.insert(0, DECL)
+import importlib.util
+_spec = importlib.util.spec_from_file_location('egad_decl', os.path.join(DECL, 'egad-decl.py'))
+decl = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(decl)
+
+FILES = ('agenda', 'mood', 'tags', 'choices')
+
+def now():
+    return os.environ.get('EGAD_NOW') or __import__('datetime').datetime.now(__import__('datetime').timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+def read(d, name):
+    p = os.path.join(d, name + '.org')
+    return decl.to_json(open(p, encoding='utf-8').read()) if os.path.exists(p) else []
+
+def write(d, name, nodes):
+    with open(os.path.join(d, name + '.org'), 'w', encoding='utf-8') as f:
+        f.write('\n'.join(decl.to_org(nodes)) + ('\n' if nodes else ''))
+
+def find(nodes, ident, parent=None):
+    for n in nodes:
+        if n['props'].get('id') == ident:
+            return n, parent
+        r = find(n['children'], ident, n)
+        if r[0]: return r
+    return None, None
+
+def walk(nodes):
+    for n in nodes:
+        yield n; yield from walk(n['children'])
+
+def node(title, props):
+    return {'title': title, 'props': props, 'children': []}
+
+class Refused(Exception):
+    pass
+
+def choice(state, key):
+    for n in state['choices']:
+        if n['title'] == key: return n['props'].get('value')
+    return None
+
+def apply(state, t):
+    """Apply one track (its props) to state {agenda, mood, tags, choices}.  The only place state changes."""
+    op = t['op']
+    if op == 'capture':
+        f = state[t['file']]
+        props = {k[5:]: v for k, v in t.items() if k.startswith('prop-')}
+        props = {'id': t['id'], **props}
+        f.append(node(t['title'], props))
+    elif op == 'refile':
+        f = state[t['file']]
+        n, parent = find(f, t['id'])
+        (parent['children'] if parent else f).remove(n)
+        if t['under'] == '-':
+            f.append(n)
+        else:
+            dest, _ = find(f, t['under'])
+            dest['children'].append(n)
+    elif op == 'intern':
+        state['tags'].append(node(t['word'], {'frame': t['frame'], 'at': t['at']}))
+    elif op == 'remember':
+        state['choices'] = [n for n in state['choices'] if n['title'] != t['key']]
+        state['choices'].append(node(t['key'], {'value': t['value'], 'at': t['at']}))
+    elif op == 'share-mood':
+        n, _ = find(state['mood'], t['id'])
+        n['props']['share'] = True
+        w = n['props'].get('shared-with', [])
+        n['props']['shared-with'] = (w if isinstance(w, list) else [w]) + [t['intersection']]
+    elif op == 'epmo-import':
+        if not find(state['mood'], t['id'])[0]:
+            state['mood'].append(node(t['title'], {'id': t['id'], 'feeling': t['feeling'], 'from': t['from'], 'share': True}))
+    elif op == 'set':
+        n, _ = find(state[t['file']], t['id'])
+        n['props'][t['key']] = t['value']
+    else:
+        raise Refused(f'unknown operation in a track: {op}')
+
+def load(d):
+    return {k: read(d, k) for k in FILES}
+
+def save(d, state):
+    for k in FILES: write(d, k, state[k])
+
+def track(d, state, props):
+    """Write the track first (append-only), then apply it and save."""
+    tracks = read(d, 'tracks')
+    props = {'op': props['op'], 'at': now(), 'by': os.environ.get('EGAD_USER', 'self'), **props}
+    apply(state, props)                     # refuses before anything is written if the op cannot apply
+    tracks.append(node(f"{len(tracks) + 1} {props['op']}", props))
+    write(d, 'tracks', tracks)
+    save(d, state)
+
+def next_id(state, file):
+    prefix = {'agenda': 'a', 'mood': 'm'}[file]
+    used = [int(n['props']['id'][1:]) for n in walk(state[file]) if str(n['props'].get('id', '')).startswith(prefix)]
+    return f'{prefix}{max(used, default=0) + 1}'
+
+def cmd(argv):
+    if len(argv) < 3:
+        print(open(__file__).read().split('\nimport json')[0]); return 2
+    c, d, rest = argv[1], argv[2], argv[3:]
+    os.makedirs(d, exist_ok=True)
+    st = load(d)
+    kv = dict(a.split('=', 1) for a in rest if '=' in a and not a.startswith('--'))
+    flags = {a for a in rest if a.startswith('--')}
+    words = [a for a in rest if '=' not in a and not a.startswith('--')]
+    if c == 'capture':                                        # [CAPTURE]
+        f, title = words[0], ' '.join(words[1:])
+        if f not in ('agenda', 'mood') or not title: raise Refused('capture agenda|mood TITLE [key=value ...]')
+        props = dict(kv)
+        if f == 'agenda':
+            props.setdefault('state', 'TODO')
+            props.setdefault('visibility', choice(st, 'default-agenda') or 'open')       # normally open
+        else:
+            props.setdefault('share', False)                                             # normally closed
+        tp = {'op': 'capture', 'file': f, 'id': next_id(st, f), 'title': title}
+        tp.update({'prop-' + k: (False if v == 'nil' else True if v == 't' else v) if isinstance(v, str) else v for k, v in props.items()})
+        track(d, st, tp); print(tp['id'])
+    elif c == 'refile':                                       # [REFILE]
+        f, ident, under = words
+        if not find(st[f], ident)[0]: raise Refused(f'no {ident} in {f}')
+        if under != '-' and not find(st[f], under)[0]: raise Refused(f'no {under} in {f}')
+        track(d, st, {'op': 'refile', 'file': f, 'id': ident, 'under': under})
+    elif c == 'intern':                                       # [INTERN]
+        word = words[0].upper()
+        if any(n['title'] == word for n in st['tags']): raise Refused(f'{word} is already interned')
+        track(d, st, {'op': 'intern', 'word': word, 'frame': kv.get('frame', 'TAG')})
+    elif c == 'done':
+        track(d, st, {'op': 'set', 'file': 'agenda', 'id': words[0], 'key': 'state', 'value': 'DONE'})
+    elif c == 'opt-in-mood':
+        track(d, st, {'op': 'remember', 'key': 'mood-sharing', 'value': True})
+    elif c == 'share-mood':                                   # MOOD's consent: opt-in, then a confirm or a remembered yes
+        ident, where = words
+        if choice(st, 'mood-sharing') is not True: raise Refused('mood sharing is off (normally closed): run opt-in-mood first')
+        key = 'share-mood@' + where
+        if '--confirm' not in flags and choice(st, key) is not True:
+            raise Refused(f'sharing a mood with {where} needs --confirm (or --confirm --remember to stop asking for {where})')
+        if '--remember' in flags: track(d, st, {'op': 'remember', 'key': key, 'value': True})
+        track(d, st, {'op': 'share-mood', 'id': ident, 'intersection': where})
+    elif c == 'view':                                         # [VM]: what someone sees
+        who = kv.get('who', 'self')
+        ag = [n for n in walk(st['agenda']) if who == 'self' or n['props'].get('visibility') == 'open']
+        md = [n for n in walk(st['mood']) if who == 'self' or (n['props'].get('share') is True and who in (n['props'].get('shared-with') or []))]
+        print(json.dumps({'who': who, 'agenda': [n['title'] for n in ag], 'mood': [n['title'] for n in md]}, ensure_ascii=False))
+    elif c == 'pmo':                                          # AGENDA -> PMO: rows for the PMO ledger's todos.tsv
+        proj = kv.get('project', 'egad')
+        for i, n in enumerate(walk(st['agenda']), 1):
+            p = n['props']
+            print('\t'.join([str(i), str(p.get('project', proj)), str(p.get('state', 'TODO')), str(p.get('priority', 'C')), '', n['title']]))
+    elif c == 'epmo':                                         # MOOD <-> EPMO, both ways, consent kept
+        sub = words[0]
+        if sub == 'export':
+            where = kv['to']
+            out = [{'id': n['props']['id'], 'title': n['title'], 'feeling': n['props'].get('feeling', '')}
+                   for n in walk(st['mood']) if n['props'].get('share') is True and where in (n['props'].get('shared-with') or [])]
+            print(json.dumps({'from': os.environ.get('EGAD_USER', 'self'), 'moods': out}, ensure_ascii=False))
+        elif sub == 'import':
+            data = json.load(open(words[1], encoding='utf-8'))
+            for m in data['moods']:
+                track(d, st, {'op': 'epmo-import', 'id': f"{data['from']}:{m['id']}", 'title': m['title'],
+                              'feeling': m['feeling'], 'from': data['from']})
+    elif c == 'replay':                                       # TRACKS <=> the files
+        fresh = {k: [] for k in FILES}
+        for t in read(d, 'tracks'):
+            apply(fresh, t['props'])
+        bad = [k for k in FILES if fresh[k] != st[k]]
+        if bad:
+            print('DIFFER ' + ' '.join(bad) + ': these files changed outside the tracks'); return 1
+        print(f"replay: {len(read(d, 'tracks'))} tracks rebuild all {len(FILES)} files exactly")
+    else:
+        raise Refused(f'unknown command {c}')
+    return 0
+
+if __name__ == '__main__':
+    try:
+        sys.exit(cmd(sys.argv))
+    except (Refused, decl.Refused) as e:
+        print(f'REFUSED: {e}', file=sys.stderr); sys.exit(1)
 #+END_SRC

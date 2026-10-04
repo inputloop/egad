@@ -75,7 +75,14 @@ and on the record.
 The smallest literate application that exercises everything: one Org file that tangles, with either tangler, into a
 page styled only by egad tokens with an AWAIT echo, an Emacs command that greets in egad's faces, and a JSON greeting
 through the declarative layer.  =tests/hello-check.sh= proves the tangles agree and the page names only tokens that
-exist.  It will grow to pass the test its author has written on a card.
+exist.
+
+Its author's test card says: /Org is the floor, as one person needs, at the ceiling/, with seven limbs: AGENDA (to
+a project ledger), MOOD (both ways with a wider one), view, capture, intern, refile, and TRACKS, a log that goes both
+ways.  hello-egad's last section is that organiser, in one Org file: every operation writes a track and then
+applies it, and a replay rebuilds every file from the tracks alone, so the log and the files are two readers of one
+history.  =tests/organize-check.sh= plays two people through it and holds it to the defaults: agenda items open,
+moods closed until opt-in and a confirm, a remembered yes only for its destination.
 
 * The next proof: organising for a few people
 

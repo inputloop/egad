@@ -18,10 +18,10 @@ check() { # ORG OUTDIR -> 0 when everything agrees
     cp "$c_org" "$o/org/hello-egad.org"
     "$EMACS" --batch -Q --eval "(progn (require 'org) (require 'ob-tangle) (setq org-confirm-babel-evaluate nil)
       (org-babel-tangle-file \"$o/org/hello-egad.org\"))" >/dev/null 2>&1 || { echo "FAIL org-babel-tangle"; f=1; }
-    for x in hello.html hello.css hello.js hello-egad.el; do
+    for x in hello.html hello.css hello.js hello-egad.el egad-org.py; do
       cmp -s "$o/py/$x" "$o/org/$x" || { echo "FAIL $x differs between the two tanglers"; f=1; }
     done
-    [ $f = 0 ] && echo "ok   4 forms identical from both tanglers"
+    [ $f = 0 ] && echo "ok   5 forms identical from both tanglers"
   else echo "NOT CHECKED the two tanglers agree (no Emacs)"; fi
   [ -f "$here/dist/css/egad-tokens.css" ] || python3 "$here/emit/emit.py" >/dev/null
   missing=$(grep -ho 'var(--egad-[a-z0-9-]*)' "$o/py/hello.css" "$o/py/hello.html" | sed 's/var(\(.*\))/\1/' | sort -u |
