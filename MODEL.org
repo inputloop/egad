@@ -107,6 +107,14 @@ A planned run of about ninety days, three people, mostly on phones, over a WireG
 - The hypothesis: when a person shares context about how they feel about their work, human and machine helpers
   choose better what to help with.  Success: all three people want to keep using what comes out.
 
+* Two of his words, for where egadjit sits
+
+*Entertetris* and *Entertreties* are his (2026-10-04); his definitions are quoted in full in
+=ghostwheel-nodes/ROLLOUT.org=.  Where they touch egad: egadjit decides a treatment when the screen is
+drawn, from who is looking.  Entertreties says where that "who?" is answered: on the context VM for
+that context, not in the leaf container, which only carries an assertion outward after a user acts,
+playing back the person's "remember my preference" for that context.
+
 * Status
 
 See =README.org= ("Status, honestly").  The declarative layer and hello-egad are new (2026-10-04) and run without
