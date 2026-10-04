@@ -1,0 +1,31 @@
+#+TITLE: The gallery
+#+SUBTITLE: a catalogue of themes the way emacsthemes.com does it: a recipe per theme, a screenshot per recipe, a static page
+
+* Format (decided)
+
+One JSON recipe per theme in =gallery/recipes/=:
+
+#+BEGIN_SRC json
+{"name": "egad-operandi-theme", "variant": "operandi", "scheme": "light",
+ "package": {"archive": "egad", "name": "egad-operandi-theme"},
+ "source": "tokens/egad-tokens.json", "tokens_version": 1,
+ "screenshot": "screens/egad-operandi.png", "tags": ["modus", "aaa", "org"]}
+#+END_SRC
+
+Screenshots are taken from the =org-html/example.org= export rendered in each theme
+(a browser) and from =emacs -Q= with the theme loaded on the same Org file (a frame
+dump), so a visitor sees the same document on both surfaces.  The generator reads the
+recipes and writes =dist/site/gallery/index.html= with the egad org-html stylesheet,
+so the gallery is itself an egad page.
+
+* Generator (not yet)
+
+=gallery/build.py= is the next thing to write after a second theme exists that is
+not derived from the same tokens -- a gallery of two variants of one palette is a
+swatch, not a catalogue.  When peers publish their own recipes, =check-peers= can
+collect them into one gallery of the network, each entry naming its origin node.
+
+* Recipes present
+
+- =recipes/egad-operandi.json=
+- =recipes/egad-vivendi.json=

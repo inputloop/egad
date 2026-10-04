@@ -1,0 +1,2 @@
+{"viewer": "alice", "constraints": {"reduced_motion": true, "screen_reader": false, "density": "dense"},
+ "prefer": {"await": ["echo", "pulse", "progress", "spinner"]}}

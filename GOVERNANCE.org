@@ -1,0 +1,87 @@
+#+TITLE: Governance of a multi-user egad node
+#+SUBTITLE: what CPAN's PAUSE got right, carried over to a small network of peers
+
+A node that hosts one person's packages needs no rules.  A node that hosts several
+people's, or that mirrors other nodes, needs a few.  CPAN has run such a thing since
+1995 through PAUSE, and its model is small enough to copy.  What follows is the
+copy, with each rule stated as something a script can check.
+
+* Names are claimed by first upload, and the claim is a record
+
+PAUSE: a package name that arrives for the first time is assigned to the author who
+uploaded it.  The record of who owns what is itself a published file
+(=06perms.txt=), so anyone can audit it.
+
+egad: the node keeps =perms.txt= beside =archive-contents=, one line per package:
+
+: egad-operandi-theme   corwin   first-come
+: egad-vivendi-theme    corwin   first-come
+: some-other-package    alice    first-come
+: some-other-package    bram     co-maint
+
+A =make-archive.py= run that would add a package already owned by someone else, and
+not by the uploader, refuses.  (Not yet implemented: today =make-archive.py= has one
+operator.  The check is one lookup in this file.)
+
+* Co-maintainers are granted, revocable, and per package
+
+PAUSE: the first-come owner can grant a co-maintainer bit per module and revoke it
+at any time; co-maintainers can upload, not grant.  egad keeps the same two roles and
+no third.  Grants are lines in =perms.txt=; revocation removes the line.  Both are
+commits, so history is the audit log.
+
+* Taking over an unreachable maintainer's name is slow on purpose
+
+PAUSE requires a documented attempt to reach the owner by several routes, a wait of
+"at least several weeks", and a public request before admins reassign.  egad adopts
+the same: a takeover is a pull request against =perms.txt= that links the attempts
+and sits for 28 days (4 weeks; a house number, stated as such) before merge.  Node
+operators can transfer; nobody else can.
+
+* Indices are generated, signed, and the only thing a client trusts
+
+PAUSE publishes =02packages.details.txt= (the index) and =CHECKSUMS= in every
+directory, signed by the PAUSE key; a client verifies the signature, then the
+checksums, then the file.  ELPA collapses this into =archive-contents= plus a
+detached =.sig= per file, which is what =make-archive.py --sign= produces and what
+=package-check-signature 'all= verifies.  The rule carried over: *a node signs with
+one key, publishes its fingerprint in =/.well-known/egad=, and a peer pins it*.  A
+key change is a visible event (=check-peers= prints KEY-MISMATCH), not a silent one.
+
+* Mirrors copy files; they do not re-sign
+
+CPAN mirrors rsync from a master and serve bytes unchanged; the signatures remain
+the author's.  An egad peer that mirrors another node's archive serves it under a
+path that names the origin (=/elpa/from/<node>/=) and leaves the origin's =.sig=
+files in place.  The mirror's own =/.well-known/egad= lists the mirrored archive
+with its origin's fingerprint, not its own.  (Not yet implemented: the sync itself.
+rsync over WireGuard, or a =check-peers --pull= that fetches by index, are both one
+afternoon; the rule is what matters now.)
+
+* Testers are welcome and their reports are data
+
+CPAN Testers run every upload on many platforms and publish results nobody has to
+act on.  egad's equivalent is =tests/= run by anyone, with a report file per run
+(=reports/<node>-<date>.txt=) that a node may publish under =/reports/=.  A failing
+report blocks nothing; a pattern of them is how a maintainer learns.
+
+* What egad adds that CPAN did not need
+
+- *Two surfaces.*  PAUSE is one public upload server.  egad has a public node and a
+  trusted node per operator; only the trusted one carries =/jit/= forms, because a
+  tool form is something a client may run, and the audience for that is the people
+  on your tunnel.  Promotion from trusted to public is a deliberate copy.
+- *Mutual listing.*  A peer relationship exists when both =/.well-known/egad=
+  documents name each other.  One-way listing is allowed (you may mirror someone
+  who does not know you) but is reported as such.
+- *Treatment preferences are per person and never uploaded.*  The viewer files
+  =jit/resolve.py= reads stay on the client.  A shared screen sends its viewers'
+  constraints to the resolver, never their identities.
+
+* Falsifiers
+
+Each rule above fails visibly in a specific way: a second owner appears in
+=perms.txt= without a =co-maint= line; a takeover merges under 28 days; a mirrored
+file verifies against the mirror's key instead of the origin's; a =/jit/= path
+answers on a public node.  =tests/= will grow a check for each as the mechanism
+behind it lands; until then this document is the check, read by a person.

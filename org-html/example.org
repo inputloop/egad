@@ -1,0 +1,36 @@
+#+TITLE: An egad page
+#+SUBTITLE: every colour on this page is a token; every token traces to Modus
+#+SETUPFILE: egad-local.setup
+#+TODO: TODO WAITING | DONE
+
+* Why an Org document is the first consumer
+The org-mode HTML export already has a vocabulary for the things egad cares
+about: headlines, =TODO= keywords, priorities, tags, timestamps, tables, source
+blocks and drawers.  Styling that export is the shortest path from the tokens
+to a page a person can read, so it comes before any component library.
+
+* TODO [#A] Check the page in both colour schemes                  :review:a11y:
+  SCHEDULED: <2026-10-04 Sun>
+  The ~prefers-color-scheme~ media query switches to vivendi; so does
+  =data-theme="vivendi"= on the root element.
+
+* DONE Measure the contrast pairs                                      :done:
+  CLOSED: [2026-10-03 Sat 21:40]
+  Thirty-two declared pairs, all at or above their floor, in both themes.
+
+* WAITING A table, as a buffer would draw it
+| token          | operandi | vivendi | floor |
+|----------------+----------+---------+-------|
+| text on canvas |    21.00 |   21.00 |   7.0 |
+| link on canvas |    10.44 |    8.70 |   7.0 |
+| todo on canvas |     8.01 |    7.03 |   7.0 |
+
+* A source block
+#+BEGIN_SRC python
+def contrast(a, b):
+    """WCAG 2.1 relative-luminance ratio."""
+    la, lb = sorted((lum(a), lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+#+END_SRC
+
+Press [[https://egad.bru.st][egad.bru.st]] or =C-c C-e h h= to export this file yourself.

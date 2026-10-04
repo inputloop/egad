@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>egadjit forms</title>
+<link rel="stylesheet" href="../org/egad.css">
+<style>
+  /* the web client for /jit/: a table of forms, each opened as text with its guidance.
+     Served by the trusted node next to jit-index.json; same tokens as everything else. */
+  .guidance { color: var(--egad-text-dim); max-width: 60ch; white-space: normal; }
+  pre.form { max-height: 60vh; }
+  .sha { font-family: var(--egad-font-fixed); font-size: 12px; }
+  .ok { color: var(--egad-signal-success); } .bad { color: var(--egad-signal-error); }
+</style>
+</head>
+<body>
+<div id="content">
+  <h1 class="title">egadjit forms</h1>
+  <p class="subtitle">tool forms tangled from literate Org files, served by this trusted node</p>
+  <table id="forms"><thead><tr><th>form</th><th>lang</th><th>bytes</th><th>guidance</th></tr></thead><tbody></tbody></table>
+  <h2 id="form-title"></h2>
+  <p id="form-meta" class="sha"></p>
+  <pre id="form-body" class="form"></pre>
+  <div data-egad-await></div>
+</div>
+<script>
+(async function () {
+  const tbody = document.querySelector("#forms tbody");
+  const status = document.querySelector("[data-egad-await]");
+  status.textContent = "Fetching jit-index.json…";
+  const index = await (await fetch("jit-index.json", {cache: "no-store"})).json();
+  status.textContent = index.forms.length + " forms, generated " + index.generated;
+  for (const f of index.forms) {
+    const tr = document.createElement("tr");
+    const a = document.createElement("a"); a.href = "#" + f.path; a.textContent = f.path;
+    a.addEventListener("click", (e) => { e.preventDefault(); open(f); });
+    tr.append(td(a), td(f.lang), td(String(f.bytes)), td(f.guidance, "guidance"));
+    tbody.append(tr);
+  }
+  async function open(f) {
+    status.textContent = "Fetching " + f.path + "…";
+    const buf = await (await fetch(f.path, {cache: "no-store"})).arrayBuffer();
+    const sha = [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map(b => b.toString(16).padStart(2, "0")).join("");
+    const ok = sha === f.sha256;
+    document.querySelector("#form-title").textContent = f.path;
+    const meta = document.querySelector("#form-meta");
+    meta.textContent = (ok ? "sha256 OK " : "sha256 MISMATCH — do not use ") + sha.slice(0, 16) + "…  from: " + f.headline;
+    meta.className = "sha " + (ok ? "ok" : "bad");
+    document.querySelector("#form-body").textContent = new TextDecoder().decode(buf);
+    status.textContent = ok ? "" : "Index and file disagree.";
+  }
+  function td(x, cls) { const d = document.createElement("td"); if (cls) d.className = cls; if (typeof x === "string") d.textContent = x; else d.append(x); return d; }
+  if (location.hash) { const f = index.forms.find(f => "#" + f.path === decodeURIComponent(location.hash)); if (f) open(f); }
+})();
+</script>
+</body>
+</html>

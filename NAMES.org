@@ -1,0 +1,30 @@
+#+TITLE: NAMES: what "egad" stands for, ten ways
+#+SUBTITLE: backronyms as design prompts
+
+The letters were fixed first; the words were drawn afterwards from a four-column
+word table the author keeps for naming things.  Each expansion is kept not because
+it is true but because reading it as a sentence about user interfaces made us
+think of something we would not otherwise have built.  The first is the one the
+repository uses when it has to pick.
+
+| #  | E          | G        | A        | D           | read as                                                                                         | it named                        |
+|----+------------+----------+----------+-------------+-------------------------------------------------------------------------------------------------+---------------------------------|
+|  1 | EXPRESSION | GLOSS    | ASSEMBLY | DERIVATIONS | What the author means → the prose that explains it → composing the parts → the files that fall out | the whole pipeline              |
+|  2 | EVENT      | GATE     | ACCORD   | DEFAULT     | An event arrives, passes a gate, is shown the way everyone present agreed, else the default        | =jit/resolve.py= (AWAIT)        |
+|  3 | ENTRY      | GARDEN   | APPEND   | DRAWER      | UI as text that accumulates: an entry in a garden of documents, appended, with its drawer of facts | the literate file model         |
+|  4 | EVIDENCE   | GUARD    | ALIGN    | DOOR        | A door opens on evidence (a signature) behind a guard (the tunnel) when two peers align            | =check-peers=, =.well-known=    |
+|  5 | ECLIPSE    | GRADIENT | ACCENT   | DECAY       | Focus as an eclipse: everything else dims on a gradient, the accent stays, and it decays with time | a future FOCUS category         |
+|  6 | ELEMENT    | GRID     | ARRAY    | DIGIT       | Elements on a character grid, arrays of cells, digits that line up                                | the fixed-pitch register (1ch/1lh) |
+|  7 | ESSENCE    | GROUND   | ATOM     | DIATOMIC    | A semantic essence on a ground, made of atoms, judged as a pair: foreground on background          | the tokens and the contrast gate |
+|  8 | EMIT       | GATEWAY  | ARCHIVE  | DOMAIN      | Emit the derivations, publish a gateway document, keep an archive, under a name                   | =emit.py=, the node             |
+|  9 | EXAMPLE    | GAME     | AGAINST  | DEAL        | Every claim gets an example, played as a game against a second implementation, dealt per viewer   | =tests/= (two tanglers, two gates) |
+| 10 | EDITION    | GROWTH   | ADD      | DECK        | Editions grow by adding to the deck                                                                | the gallery                     |
+
+Rules of the game, for the next round: the four words must come from the table,
+one per letter; the sentence must be about interfaces; and it must name something
+this repository could build or has built.  An expansion that names nothing is
+dropped.
+
+"egadjit" is egad plus *just in time*: the choice of treatment is made when the
+screen is drawn, from who is looking at it.  The J has no backronym and does not
+need one.

@@ -1,0 +1,7 @@
+dist/
+tests/tmp/
+tests/tmp-jit/
+tests/tmp-run.log
+*.elc
+*.html
+!jit/index.html

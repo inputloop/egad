@@ -1,0 +1,21 @@
+egad -- license not yet chosen
+
+The author has not yet chosen a license for this repository.  Until a LICENSE
+file with actual license text replaces this note, all rights are reserved and the
+repository is not offered for redistribution.
+
+What is on the table (the author's stated lean is the first):
+
+  GPL-3.0-or-later   matches GNU Emacs and the Modus themes the colour values come
+                     from; forks of AGPL, Apache-2.0, LGPL and MPL-2.0 platforms can
+                     carry this code; proprietary products cannot ship it.
+  Apache-2.0 / MIT   maximum reach, including into closed products; no copyleft.
+  Dual               both of the above, the recipient chooses.
+
+Third-party material already present:
+  - Colour values in tokens/egad-tokens.json are reproduced from GNU Emacs's Modus
+    themes (GPL-3.0-or-later, Protesilaos Stavrou), as data.
+  - Everything else in this repository is original.
+
+Contributions sent to other projects (Nextcloud, Element, GNU Emacs, ...) go under
+each project's own license; contributors keep their copyright.

@@ -1,0 +1,36 @@
+# egad-node configuration.  Copy to egad-node.conf (public) and egadjit-node.conf (trusted).
+# Paths are relative to this file.
+
+[node]
+# The name clients will use. For the trusted node this is the name your WireGuard-side
+# private DNS resolves (e.g. egadjit.example -> 10.2.42.1); it never needs public DNS.
+name = egad.example
+# public  : the surface anyone may read (archive, org-html theme, gallery)
+# trusted : the same plus /jit/, meant to be reachable only over WireGuard
+role = public
+
+# Default is every interface. The node warns at start when that is the case.
+# For role = trusted use the WireGuard address, or `wg' to pick the first local
+# address inside wg_cidr (Linux, needs `ip').
+bind = 0.0.0.0
+port = 8443
+wg_cidr = 10.2.42.0/24
+
+# The directory to serve. emit.py and make-archive.py fill dist/site; see README.org.
+root = ../dist/site
+
+# TLS. Without both, the node serves plain HTTP and warns. For a private name on the
+# WireGuard side either use your own CA (peers pin it in peers.json "ca") or get a
+# certificate through a DNS-01 challenge: the name may resolve to a private address.
+tls_cert = tls/fullchain.pem
+tls_key  = tls/privkey.pem
+
+# The GPG key that make-archive.py --sign used. Export the public key to
+# dist/site/keys/node.asc so peers can fetch it from the URL in /.well-known/egad.
+signing_key_fingerprint =
+signing_key_path = /keys/node.asc
+
+# Peers for `check-peers' and for the /.well-known/egad "peers" list.
+peers = peers.json
+
+contact = you@example

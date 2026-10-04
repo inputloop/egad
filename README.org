@@ -1,0 +1,101 @@
+#+TITLE: egad
+#+SUBTITLE: Expression, Gloss, Assembly, Derivations: one set of design tokens, rooted in GNU Emacs, carried to every surface you use
+
+* What this is
+
+egad is a small design system and the plumbing to share it.
+
+- The *tokens* (=tokens/egad-tokens.json=) are the colours, type, spacing and radii.
+  They trace to GNU Emacs's Modus themes, which were built to clear WCAG AAA (7:1)
+  for text; the gate in this repository measures that claim rather than repeating it.
+- The *emitters* (=emit/emit.py=) derive everything else from the tokens: CSS custom
+  properties, an org-mode HTML export theme, two Emacs themes packaged for ELPA,
+  and adapters for platforms that let you theme them (Nextcloud, Element, KDE).
+- The *archive node* (=archive/=) serves the derivations the way ELPA serves
+  packages: plain files over HTTP(S), signed with GPG, discovered through
+  =/.well-known/egad=, with peer trust that is checked, not assumed.
+- *egadjit* (=jit/=) is literate tooling: an Org file holds prose for people and for
+  agents, plus source blocks in whatever language suits the tool.  =unpack.py=
+  tangles it without Emacs; =org-babel-tangle= tangles it with Emacs; a test insists
+  they agree.  A resolver chooses, when a screen is drawn, which treatment of a UI
+  category (the first is AWAIT: "the page is waiting") suits everyone looking at it.
+
+Everything in this repository is meant to be understood from this repository alone.
+
+* Quickstart
+
+#+BEGIN_SRC sh
+make check          # gate, emitters, Emacs themes, archive round trip, egadjit, ERT -- all local
+make                # dist/: css, org-html theme, themes, adapters, jit forms, an unsigned archive
+#+END_SRC
+
+Use the org-html theme in any Org file:
+
+#+BEGIN_SRC org
+,#+SETUPFILE: https://egad.bru.st/org/egad.setup
+#+END_SRC
+
+Add the archive to Emacs (the node's =/.well-known/egad= prints this line for you):
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'package-archives '("egad" . "https://egad.bru.st/elpa/"))
+;; then M-x package-install RET egad-operandi-theme RET   (or egad-vivendi-theme)
+#+END_SRC
+
+* The two surfaces
+
+Run two node processes from two config files (see =archive/egad-node.conf.example=):
+
+| role      | name (example)   | reachable from        | serves                                   |
+|-----------+------------------+-----------------------+------------------------------------------|
+| =public=  | egad.example     | the internet          | archive, org-html theme, gallery, keys    |
+| =trusted= | egadjit.example  | your WireGuard only   | the same, plus =/jit/= tool forms         |
+
+The trusted name is resolved by private DNS on the WireGuard side (an entry in your
+peers' hosts files, or a resolver that answers only on the tunnel); it never needs a
+public record.  The trusted node should bind its WireGuard address: =bind = wg= picks
+the first local address inside =wg_cidr= (default =10.2.42.0/24=).
+
+*The default bind is 0.0.0.0, every interface, and the node warns at start.*  Read
+=net/FIREWALL.org= before you leave a node running: it has the commands for
+GNU/Linux (nftables, firewalld, ufw), the BSDs (pf), macOS and Windows 10/11.
+
+Transport trust and content trust are separate layers on purpose: WireGuard (or TLS)
+says who you are talking to; the GPG signature on every archive file says who made
+it.  =egad-node.py check-peers= reports whether each peer lists you back and whether
+the signing key they publish is the one you pinned.
+
+* Layout
+
+| path                      | what                                                        |
+|---------------------------+-------------------------------------------------------------|
+| =tokens/=                 | the tokens and their gate (=tokens_check.py=)               |
+| =emit/=                   | tokens → css, org-html, deftheme, Nextcloud, Element, KDE   |
+| =org-html/=               | the export theme's structure CSS, setup files, an example   |
+| =archive/=                | =make-archive.py=, =egad-node.py=, config examples, README  |
+| =net/=                    | firewall hints per OS, a WireGuard peer example             |
+| =jit/=                    | egadjit: =unpack.py=, =resolve.py=, =egadjit.el=, treatments |
+| =gallery/=                | the theme catalogue (format decided, generator not yet)     |
+| =tests/=                  | every claim above, as a runnable check                      |
+| =dist/=                   | generated; never edited, never committed                    |
+
+* Status, honestly
+
+Done and tested here: the token gate (32 pair×theme checks, two implementations in
+two languages), both Emacs themes load, the org export picks up the theme, a signed
+archive is installed by a real Emacs with =package-check-signature 'all= and refused
+when tampered, two nodes report mutual trust from both sides, seven jit forms tangle
+identically from Python and from Org, the resolver's four documented outcomes hold.
+
+Not yet: the Nextcloud and Element adapters are generated from each project's
+documented variable names but have not been loaded into a live instance; the KDE
+scheme is untested on Plasma; the gallery has a format and no generator; mirror
+synchronisation between peers is described in =GOVERNANCE.org= and not implemented;
+=egadjit.el= shows forms and does not install them (by design, for now).  One
+observation to reproduce on your own Emacs build is recorded in
+=archive/README.org= under Known gaps (url.el and a self-signed trust file).
+
+* License
+
+Not yet chosen: see =LICENSE=.  Until it is, this repository is not for
+redistribution.  The Modus colour values are data from a GPL-3.0-or-later work.

@@ -1,0 +1,23 @@
+# WireGuard interface for an egad trusted node.  Copy to /etc/wireguard/wg0.conf,
+# fill the keys, `wg-quick up wg0`.  Addresses are the project's example network;
+# change the third octet to taste, and the node's wg_cidr with it.
+
+[Interface]
+Address = 10.2.42.1/24
+ListenPort = 51820
+PrivateKey = REPLACE-WITH-THIS-HOSTS-PRIVATE-KEY
+# Leave out any PostUp iptables/nft NAT rules: this tunnel is a place, not a gateway.
+
+# One block per peer.  AllowedIPs is exactly the peer's tunnel address, so that
+# address is the peer's identity on this network.
+[Peer]
+# alice's laptop
+PublicKey = REPLACE-WITH-PEER-PUBLIC-KEY
+AllowedIPs = 10.2.42.7/32
+PersistentKeepalive = 25
+
+[Peer]
+# bram's desktop
+PublicKey = REPLACE-WITH-PEER-PUBLIC-KEY
+AllowedIPs = 10.2.42.9/32
+PersistentKeepalive = 25

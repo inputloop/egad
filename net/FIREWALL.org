@@ -1,0 +1,112 @@
+#+TITLE: Keeping a node to the people it is for
+#+SUBTITLE: firewall and WireGuard notes for GNU/Linux, the BSDs, macOS and Windows 10/11
+
+=egad-node.py= listens on 0.0.0.0 unless told otherwise, and says so when it starts.
+That default is convenient on a laptop and wrong on anything with a public address.
+Three layers, from the cheapest:
+
+1. *Bind narrowly.*  =bind = wg= (or the address itself) in the node's config.  A
+   socket that only listens on 10.2.42.1 cannot be reached from eth0.  This is the
+   one that matters; the rest is belt and braces.
+2. *Filter the port* on the host, so a future mistake in (1) is still contained.
+3. *Put the trusted node behind WireGuard* so the only route to it is the tunnel.
+
+Every command below assumes the trusted node on TCP 8443 and the WireGuard interface
+=wg0= with the network =10.2.42.0/24=.  Change the numbers, not the shape.
+
+* GNU/Linux
+
+** nftables (Debian, Fedora, Arch defaults)
+#+BEGIN_SRC sh
+sudo nft add table inet egad
+sudo nft add chain inet egad input '{ type filter hook input priority 0; }'
+sudo nft add rule inet egad input iifname "wg0" tcp dport 8443 accept
+sudo nft add rule inet egad input tcp dport 8443 drop
+sudo nft list table inet egad          # read it back; then persist with `nft list ruleset > /etc/nftables.conf`
+#+END_SRC
+** firewalld (Fedora, RHEL, openSUSE)
+#+BEGIN_SRC sh
+sudo firewall-cmd --permanent --new-zone=egad
+sudo firewall-cmd --permanent --zone=egad --add-interface=wg0
+sudo firewall-cmd --permanent --zone=egad --add-port=8443/tcp
+sudo firewall-cmd --reload
+sudo firewall-cmd --zone=public --list-ports   # 8443 must NOT appear here
+#+END_SRC
+** ufw (Ubuntu)
+#+BEGIN_SRC sh
+sudo ufw allow in on wg0 to any port 8443 proto tcp
+sudo ufw deny 8443/tcp
+sudo ufw status numbered
+#+END_SRC
+
+* The BSDs (pf: OpenBSD, FreeBSD, NetBSD with pf)
+Add to =/etc/pf.conf= and =pfctl -f /etc/pf.conf=:
+#+BEGIN_SRC conf
+wg_if = "wg0"
+pass in on $wg_if proto tcp to port 8443
+block in proto tcp to port 8443
+#+END_SRC
+=pfctl -sr= shows the rules; =pfctl -si= that pf is enabled.
+
+* macOS
+macOS ships pf too, but the Application Firewall in System Settings is per program,
+and Python is what runs the node.  Two choices:
+- Allow =python3= in System Settings → Network → Firewall → Options, then rely on
+  layer (1): the node bound to the WireGuard address is not reachable from Wi-Fi
+  regardless of this setting.
+- Or use pf as above: put the rules in =/etc/pf.anchors/egad=, reference the anchor
+  from =/etc/pf.conf=, and =sudo pfctl -e -f /etc/pf.conf=.  Survives reboot only
+  with a LaunchDaemon; the WireGuard app's own "on-demand" setting is simpler for
+  most people.
+
+* Windows 10 / 11
+Windows Defender Firewall, from an administrator PowerShell:
+#+BEGIN_SRC powershell
+New-NetFirewallRule -DisplayName "egad trusted node (WireGuard only)" -Direction Inbound `
+  -Protocol TCP -LocalPort 8443 -LocalAddress 10.2.42.0/24 -Action Allow
+New-NetFirewallRule -DisplayName "egad trusted node (block elsewhere)" -Direction Inbound `
+  -Protocol TCP -LocalPort 8443 -Action Block
+Get-NetFirewallRule -DisplayName "egad*" | Format-Table DisplayName, Enabled, Action
+#+END_SRC
+Block rules win over allow rules in Windows unless the allow is scoped, which the
+first rule is (by local address).  The WireGuard for Windows client creates its
+interface as a *Public* network profile by default; the rules above do not depend on
+the profile.
+
+* WireGuard, in one screen
+A peer file for a node, with placeholders (see =wireguard/wg0.conf.example=):
+#+BEGIN_SRC conf
+[Interface]
+Address = 10.2.42.1/24
+ListenPort = 51820
+PrivateKey = <this host's private key>
+
+[Peer]            # one block per machine allowed on the tunnel
+PublicKey = <peer's public key>
+AllowedIPs = 10.2.42.7/32
+PersistentKeepalive = 25
+#+END_SRC
+Keys: =wg genkey | tee private.key | wg pubkey > public.key=.  Each peer's
+=AllowedIPs= is exactly its tunnel address: that is what makes a tunnel address an
+identity, and why the node can treat "came in on wg0" as "is one of us".
+
+* Private DNS for the trusted name
+The trusted node's name (=egadjit.example=) only has to resolve on the tunnel.  The
+least machinery is a line in each peer's hosts file:
+: 10.2.42.1   egadjit.example
+(=/etc/hosts= on GNU/Linux, the BSDs and macOS;
+=C:\Windows\System32\drivers\etc\hosts= on Windows, edited as administrator.)  A
+resolver that answers only on wg0 (unbound or dnsmasq bound to 10.2.42.1) is the
+next step when there are more peers than you want to email.
+
+* TLS for a private name
+Browsers and =package.el= want HTTPS.  For a name that resolves only on the tunnel:
+- *Your own CA.*  One =openssl req -x509= root, one leaf per node; peers pin the root
+  in =peers.json= as ="ca"= and import it into their browser and Emacs.  Simplest,
+  no outside party.
+- *A public CA via DNS-01.*  Let's Encrypt will issue for =egadjit.example= if you
+  can place a TXT record in public DNS for the name; the A record may point at a
+  private address or not exist at all.  Certbot's DNS plugins do this.  No inbound
+  port 80 is needed.
+Inside WireGuard, plain HTTP is also defensible: the tunnel already authenticates
+and encrypts.  The node warns either way, so the choice is recorded in the log.

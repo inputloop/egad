@@ -1,0 +1,2 @@
+{"viewer": "chen", "constraints": {"reduced_motion": false, "screen_reader": true, "density": "dense"},
+ "prefer": {"await": ["progress", "echo", "spinner", "pulse"]}}

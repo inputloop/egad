@@ -1,0 +1,104 @@
+/* egad org-html theme: structure.  Colours come only from --egad-* custom properties
+   (prepended by emit/emit.py).  Selectors are the ones ox-html emits (Org 9.x).
+   Two registers: prose is variable-pitch on a 4px scale; anything that lines up
+   (code, tables, timestamps, keywords, tags, drawers) is fixed-pitch on 1ch/1lh. */
+
+@layer egad {
+  html { background: var(--egad-canvas); color: var(--egad-text); }
+  body {
+    margin: 0;
+    font-family: var(--egad-font-variable);
+    font-size: 16px; line-height: 26px;
+    -webkit-text-size-adjust: 100%;
+  }
+  #content, .content { max-width: 76ch; margin: 0 auto; padding: var(--egad-space-8) var(--egad-space-4); }
+
+  /* title and headlines (org level N exports as hN+1) */
+  .title { font-size: 34px; line-height: 42px; font-weight: 700; margin: 0 0 var(--egad-space-6); }
+  .subtitle { color: var(--egad-text-dim); font-size: 14px; line-height: 22px; margin-top: calc(-1 * var(--egad-space-4)); }
+  h2 { font-size: 28px; line-height: 36px; margin: var(--egad-space-8) 0 var(--egad-space-3); }
+  h3 { font-size: 22px; line-height: 30px; margin: var(--egad-space-6) 0 var(--egad-space-2); }
+  h4, h5, h6 { font-size: 18px; line-height: 26px; margin: var(--egad-space-4) 0 var(--egad-space-2); }
+  h2, h3, h4, h5, h6 { font-weight: 700; color: var(--egad-text); }
+  .section-number-2, .section-number-3, .section-number-4 { color: var(--egad-text-dim); font-family: var(--egad-font-fixed); font-weight: 400; }
+
+  /* the org primitives: keyword, priority, tags, timestamps */
+  .todo, .done, .priority, .tag, .timestamp, .timestamp-kwd, .org-src-container, pre, code, kbd, samp, table, .properties, .drawer {
+    font-family: var(--egad-font-fixed); font-size: 14px; line-height: 22px;
+  }
+  .todo { color: var(--egad-todo); font-weight: 700; }
+  .done { color: var(--egad-done); font-weight: 700; }
+  .priority { color: var(--egad-priority); font-weight: 700; }
+  .tag { color: var(--egad-tag); float: right; }
+  .tag span { margin-left: 1ch; }
+  .timestamp, .timestamp-kwd { color: var(--egad-timestamp); }
+  .timestamp-wrapper { white-space: nowrap; }
+
+  /* text */
+  p { margin: 0 0 var(--egad-space-4); }
+  a { color: var(--egad-link); text-decoration: underline; text-underline-offset: 2px; }
+  a:hover { color: var(--egad-text-alt); }
+  a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--egad-focus-ring); outline-offset: 2px; border-radius: var(--egad-radius-0);
+  }
+  em { font-style: italic; } b, strong { font-weight: 700; }
+  .underline { text-decoration: underline; }
+  del { color: var(--egad-text-dim); }
+  blockquote { margin: 0 0 var(--egad-space-4); padding: 0 0 0 var(--egad-space-4); border-left: 2px solid var(--egad-border-divider); color: var(--egad-text-dim); }
+  hr { border: 0; border-top: 1px solid var(--egad-border-divider); margin: var(--egad-space-6) 0; }
+  ul, ol { padding-left: 3ch; margin: 0 0 var(--egad-space-4); }
+  li { margin: 0 0 var(--egad-space-1); }
+  dt { font-weight: 700; } dd { margin: 0 0 var(--egad-space-2) 3ch; }
+  .footpara { display: inline; } .footdef { font-size: 14px; line-height: 22px; }
+
+  /* code: a src block is a buffer */
+  pre, .org-src-container { background: var(--egad-canvas-dim); color: var(--egad-text); border: 1px solid var(--egad-border-divider); border-radius: var(--egad-radius-0); padding: 1lh 2ch; overflow-x: auto; margin: 0 0 var(--egad-space-4); position: relative; }
+  .org-src-container pre { border: 0; padding: 0; margin: 0; background: transparent; }
+  pre.src::before { content: attr(class); position: absolute; top: 0; right: 0; padding: 0 1ch; color: var(--egad-text-dim); background: var(--egad-canvas-inactive); font-size: 12px; line-height: 18px; }
+  code, kbd, samp { background: var(--egad-canvas-dim); padding: 0 .5ch; }
+  kbd { border: 1px solid var(--egad-border-control); }
+  .org-comment, .org-comment-delimiter { color: var(--egad-text-dim); font-style: italic; }
+  .org-keyword { color: var(--egad-priority); } .org-string, .org-doc { color: var(--egad-signal-info); }
+  .org-function-name { color: var(--egad-link); } .org-variable-name { color: var(--egad-tag); }
+  .org-warning { color: var(--egad-signal-warning); }
+
+  /* tables: an org table is a grid of cells */
+  table { border-collapse: collapse; margin: 0 0 var(--egad-space-4); border-top: 1px solid var(--egad-border-divider); border-bottom: 1px solid var(--egad-border-divider); }
+  th, td { padding: 0 1ch; text-align: left; vertical-align: top; white-space: nowrap; }
+  th { font-weight: 700; border-bottom: 1px solid var(--egad-border-divider); }
+  tbody tr:hover td { background: var(--egad-canvas-line); }
+  td.org-right { text-align: right; } td.org-center { text-align: center; }
+  caption { color: var(--egad-text-dim); text-align: left; font-size: 14px; line-height: 22px; }
+
+  /* table of contents: an outline, folded with <details> when the exporter is told to */
+  #table-of-contents h2 { font-size: 14px; line-height: 22px; font-family: var(--egad-font-fixed); color: var(--egad-text-dim); margin: 0 0 var(--egad-space-2); text-transform: uppercase; letter-spacing: .05em; }
+  #text-table-of-contents ul { list-style: none; padding-left: 0; }
+  #text-table-of-contents ul ul { padding-left: 2ch; }
+  #text-table-of-contents li { margin: 0; }
+  #text-table-of-contents a { text-decoration: none; }
+  #text-table-of-contents a:hover { text-decoration: underline; }
+  #table-of-contents { background: var(--egad-canvas-dim); padding: var(--egad-space-4); margin: 0 0 var(--egad-space-6); }
+
+  /* property drawers (when exported with :with-properties) */
+  .properties, .drawer { color: var(--egad-text-dim); margin: 0 0 var(--egad-space-2); white-space: pre; }
+
+  /* figures */
+  img { max-width: 100%; height: auto; }
+  .figure { margin: 0 0 var(--egad-space-4); } .figure p { margin: 0; } .figure-number { color: var(--egad-text-dim); }
+
+  /* the mode line: postamble as a status bar */
+  #postamble, .status { font-family: var(--egad-font-fixed); font-size: 12px; line-height: 18px; color: var(--egad-text); background: var(--egad-canvas-active); border-top: 1px solid var(--egad-border-divider); padding: 0 2ch; margin-top: var(--egad-space-8); }
+  #postamble p { margin: 0; display: inline; } #postamble p + p::before { content: "  "; white-space: pre; }
+
+  /* selection, hovered rows, current line */
+  ::selection { background: var(--egad-canvas-region); color: var(--egad-text); }
+
+  /* small screens: the 4px scale shrinks, the character cell never does */
+  @media (max-width: 40rem) {
+    #content, .content { padding: var(--egad-space-4) var(--egad-space-3); }
+    .title { font-size: 28px; line-height: 36px; } h2 { font-size: 22px; line-height: 30px; } h3 { font-size: 18px; line-height: 26px; }
+    .tag { float: none; display: block; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  @media print { #table-of-contents, #postamble { display: none; } a { color: inherit; } }
+}

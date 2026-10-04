@@ -1,0 +1,2 @@
+{"viewer": "bram", "constraints": {"reduced_motion": false, "screen_reader": false, "density": "roomy"},
+ "prefer": {"await": ["spinner", "progress", "pulse", "echo"]}}

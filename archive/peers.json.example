@@ -1,0 +1,9 @@
+[
+  {
+    "name": "egadjit.example",
+    "url": "https://10.2.42.7:8443",
+    "fingerprint": "0000 0000 0000 0000 0000  0000 0000 0000 0000 0000",
+    "ca": "tls/peer-ca.pem",
+    "note": "a peer's signing-key fingerprint is pinned here after an out-of-band check; check-peers reports KEY-MISMATCH if their /.well-known/egad ever says otherwise"
+  }
+]

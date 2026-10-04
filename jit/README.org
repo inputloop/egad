@@ -1,0 +1,88 @@
+#+TITLE: egadjit
+#+SUBTITLE: literate tools, tangled by anyone, chosen just in time
+
+* The idea in three sentences
+
+A tool is written as an Org file: the prose explains it to a person and to an agent
+in the same words, and the source blocks are the tool, in whatever languages fit.
+Anyone can tangle it: Emacs with =org-babel-tangle=, or =jit/unpack.py= with only
+Python, and a test insists the two produce identical files.  The tangled *forms* are
+served by a trusted node to Emacs, to a browser, and to any other client that reads
+=jit-index.json=; each form carries its guidance paragraph and its SHA-256.
+
+* The file format
+
+Plain Org.  What =unpack.py= reads:
+
+- =#+BEGIN_SRC LANG :tangle PATH= … =#+END_SRC= -- a form.  PATH is relative to the
+  output directory; =..=, absolute paths and dot-segments are refused.
+- =#+NAME: x= on a block, and =<<x>>= on a line inside another block that has
+  =:noweb yes= -- inclusion, as in Org.
+- =#+PROPERTY: header-args :tangle dir/ :mkdirp yes= -- file-level defaults.
+- =:PROPERTIES: :header-args+: :tangle dir/ :END:= under a headline -- adds to the
+  defaults for blocks beneath it.  Plain =:header-args:= *replaces* them, exactly as
+  Org does.  (The two-tangler test caught this difference; see =tests/jit-check.sh=.)
+- The paragraph immediately above a block is its *guidance*.
+
+Everything else is prose, and is read as such.
+
+* The index a node serves
+
+#+BEGIN_SRC json
+{"egad-jit": 1, "generated": "2026-10-04T05:00:00+00:00",
+ "forms": [{"path": "await/echo.css", "lang": "css", "sha256": "…", "bytes": 303,
+            "source": "jit/treatments/await.org", "headline": "Treatment: echo",
+            "guidance": "Text in the status bar. It needs a [data-egad-await] element…"}]}
+#+END_SRC
+
+Clients verify the SHA-256 of what they fetch against the index and say so before
+showing a form.  =egadjit.el= puts it in the header line; =index.html= beside the
+forms puts it above the text.  Neither runs or installs anything.
+
+* Categories, treatments, and the resolver
+
+A *category* is a thing a UI must do (AWAIT: show that it is waiting).  A
+*treatment* is one way of doing it.  The category file (itself tangled from the
+literate source) declares each treatment's refusable facts and a *baseline* that no
+constraint can refuse:
+
+#+BEGIN_SRC json
+{"category": "await", "baseline": "echo", "order": ["echo", "progress", "pulse", "spinner"],
+ "treatments": {"spinner": {"motion": true, "announces": false, "forms": ["await/spinner.css"]}, "…": "…"}}
+#+END_SRC
+
+A *viewer* file is one person's constraints and preference order, and it stays on
+their machine:
+
+#+BEGIN_SRC json
+{"viewer": "alice", "constraints": {"reduced_motion": true, "screen_reader": false},
+ "prefer": {"await": ["echo", "pulse", "progress", "spinner"]}}
+#+END_SRC
+
+=resolve.py FOREST_DIR viewer.json [viewer2.json …]= picks, per category, the
+treatment acceptable to every viewer that ranks best for whoever it ranks worst for
+(minimise the maximum rank).  So alice (reduced motion, likes echo) and bram (likes
+spinner) sharing a screen get =progress=: nobody gets their last choice so that
+someone else gets their first.  Add chen (screen reader) and =pulse= drops out
+because it does not announce.  The trace says why each treatment was refused.
+
+That is the "just in time": the page does not bake in a spinner; it asks, when it
+draws, who is looking.  The set of categories is meant to grow -- FOCUS (what moved,
+and how we show it), SELECT, CONFIRM -- each as its own literate file with its own
+treatments, and a person's viewer file grows a branch per category.  Different
+people carry different trees over the same categories, and a shared screen walks
+the part the trees have in common.
+
+* Clients
+
+- =egadjit.el=: =M-x egadjit-list-forms= (a table; RET opens), =M-x egadjit-open-form=.
+  Set =egadjit-node= to your trusted node.
+- =index.html=: served at =/jit/= by the trusted node; same table, in a browser.
+- Anything else: fetch =jit-index.json=, then the forms; check the hashes.
+
+* What is not here yet
+
+A FOCUS category (the eclipse/decay treatment from =NAMES.org= #5); installing a
+form from =egadjit.el= (today it only shows); a resolver that runs in the browser
+(today it is a script); viewer files produced from a browser's own media queries
+(=prefers-reduced-motion= is one line of JavaScript away).

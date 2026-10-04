@@ -1,0 +1,9 @@
+# -*- mode: org; -*-
+# egad org-html theme, local.  Copy dist/org-html/egad.css next to your Org file
+# (or point the href at wherever you keep it) and add:
+#     #+SETUPFILE: PATH/TO/egad-local.setup
+#+OPTIONS: html-style:nil html-scripts:nil toc:2 num:nil ^:nil
+#+HTML_DOCTYPE: html5
+#+HTML_HEAD: <meta name="viewport" content="width=device-width, initial-scale=1">
+#+HTML_HEAD: <meta name="color-scheme" content="light dark">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="egad.css">

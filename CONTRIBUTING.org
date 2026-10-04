@@ -1,0 +1,32 @@
+#+TITLE: Contributing
+
+* Before a change
+Run =make check=.  It is local, needs python3, gpg, openssl, curl and emacs, and takes
+under a minute.  Every claim in the READMEs has a check behind it; a change that
+breaks a claim must change the README in the same commit.
+
+* Tokens
+Change =tokens/egad-tokens.json= only.  Everything under =dist/= is generated and never
+committed.  A new colour pair that text sits on gets a line in =meta.pairs= with a
+floor (=text= 7:1, =text-aa= 4.5:1, =ui= 3:1) and a =why=.  Both witnesses
+(=tokens/tokens_check.py= and =tests/egad-tokens-test.el=) must pass.
+
+* Emitters and adapters
+An adapter maps token names to a platform's own variable names and nothing else.
+Cite the page you took the names from, with its date, in the emitted file's header
+comment, and say plainly when it has not been tried on a live instance.
+
+* egadjit forms
+A new category is a new Org file under =jit/treatments/= with: the category JSON
+block, one headline per treatment with its guidance paragraph above each block, and
+a baseline that no constraint can refuse.  Add its documented outcomes to
+=tests/jit-check.sh=.
+
+* Tests
+When something gets past the tests, add coverage that would have caught it, and
+prefer a second implementation in a different language to a second assertion in the
+same one (=unpack.py= and =org-babel-tangle=; =tokens_check.py= and ERT).
+
+* Writing
+Org for prose.  Say what was observed and what was judged in separate sentences.  A
+concern without a way to show it wrong is a mood, not a finding.

@@ -1,0 +1,115 @@
+{
+  "name": "egad",
+  "version": 1,
+  "meta": {
+    "source": "GNU Emacs Modus themes (modus-operandi, modus-vivendi), palettes read from modus-themes.el, 2026-10-03. Modus is GPL-3.0-or-later; its colour values are reproduced here as data.",
+    "layers": "Base tokens keep the Modus palette names (bg-main, fg-dim, blue ...). Semantic tokens are aliases of base tokens and are what components use.",
+    "pairs": [
+      {"fg": "text",            "bg": "canvas",        "floor": "text",    "why": "body text on the page"},
+      {"fg": "text-dim",        "bg": "canvas",        "floor": "text",    "why": "secondary text on the page"},
+      {"fg": "text-dim",        "bg": "canvas-dim",    "floor": "text-aa", "why": "secondary text inside a panel"},
+      {"fg": "link",            "bg": "canvas",        "floor": "text",    "why": "links in prose"},
+      {"fg": "link",            "bg": "canvas-dim",    "floor": "text-aa", "why": "links inside a panel"},
+      {"fg": "signal-error",    "bg": "canvas",        "floor": "text",    "why": "error text"},
+      {"fg": "signal-warning",  "bg": "canvas",        "floor": "text",    "why": "warning text"},
+      {"fg": "signal-success",  "bg": "canvas",        "floor": "text",    "why": "success / DONE text"},
+      {"fg": "signal-info",     "bg": "canvas",        "floor": "text",    "why": "informational text"},
+      {"fg": "todo",            "bg": "canvas",        "floor": "text",    "why": "TODO keyword"},
+      {"fg": "tag",             "bg": "canvas",        "floor": "text",    "why": ":tags:"},
+      {"fg": "text",            "bg": "canvas-region", "floor": "text-aa", "why": "selected text"},
+      {"fg": "text",            "bg": "canvas-line",   "floor": "text",    "why": "current line / hovered row"},
+      {"fg": "border-control",  "bg": "canvas",        "floor": "ui",      "why": "input and button outlines (WCAG 1.4.11)"},
+      {"fg": "focus-ring",      "bg": "canvas",        "floor": "ui",      "why": "keyboard focus"},
+      {"fg": "focus-ring",      "bg": "canvas-dim",    "floor": "ui",      "why": "keyboard focus inside a panel"}
+    ]
+  },
+  "color": {
+    "themes": [
+      {"id": "operandi", "name": "Operandi (light)"},
+      {"id": "vivendi",  "name": "Vivendi (dark)"}
+    ],
+    "tokens": [
+      {"name": "bg-main",     "value": {"operandi": "#ffffff", "vivendi": "#000000"}, "usage": "Modus bg-main. The page."},
+      {"name": "bg-dim",      "value": {"operandi": "#f2f2f2", "vivendi": "#1e1e1e"}, "usage": "Modus bg-dim. Panels, sidebars, code blocks."},
+      {"name": "bg-active",   "value": {"operandi": "#c4c4c4", "vivendi": "#535353"}, "usage": "Modus bg-active. The active window's mode line; pressed controls."},
+      {"name": "bg-inactive", "value": {"operandi": "#e0e0e0", "vivendi": "#303030"}, "usage": "Modus bg-inactive. Inactive mode lines; disabled controls."},
+      {"name": "bg-hl-line",  "value": {"operandi": "#dae5ec", "vivendi": "#2f3849"}, "usage": "Modus bg-hl-line. Current line, hovered row."},
+      {"name": "bg-region",   "value": {"operandi": "#bdbdbd", "vivendi": "#5a5a5a"}, "usage": "Modus bg-region. Selection."},
+      {"name": "fg-main",     "value": {"operandi": "#000000", "vivendi": "#ffffff"}, "usage": "Modus fg-main. Text."},
+      {"name": "fg-dim",      "value": {"operandi": "#595959", "vivendi": "#989898"}, "usage": "Modus fg-dim. Secondary text; measures 7:1 on bg-main in both themes."},
+      {"name": "fg-alt",      "value": {"operandi": "#193668", "vivendi": "#c6daff"}, "usage": "Modus fg-alt. An alternative text colour for emphasis without weight."},
+      {"name": "border",      "value": {"operandi": "#9f9f9f", "vivendi": "#646464"}, "usage": "Modus border. Decorative dividers only: 2.65:1 on white, below the 3:1 UI floor, so never the outline of a control."},
+      {"name": "red",         "value": {"operandi": "#a60000", "vivendi": "#ff5f59"}, "usage": "Modus red."},
+      {"name": "green",       "value": {"operandi": "#006800", "vivendi": "#44bc44"}, "usage": "Modus green."},
+      {"name": "yellow",      "value": {"operandi": "#6f5500", "vivendi": "#d0bc00"}, "usage": "Modus yellow."},
+      {"name": "blue",        "value": {"operandi": "#0031a9", "vivendi": "#2fafff"}, "usage": "Modus blue."},
+      {"name": "magenta",     "value": {"operandi": "#721045", "vivendi": "#feacd0"}, "usage": "Modus magenta."},
+      {"name": "cyan",        "value": {"operandi": "#005e8b", "vivendi": "#00d3d0"}, "usage": "Modus cyan."},
+
+      {"name": "canvas",         "value": "{bg-main}",     "usage": "Semantic: the page background. Components use this, not bg-main."},
+      {"name": "canvas-dim",     "value": "{bg-dim}",      "usage": "Semantic: panel, sidebar, code block background."},
+      {"name": "canvas-line",    "value": "{bg-hl-line}",  "usage": "Semantic: current line, hovered row, open fold's headline."},
+      {"name": "canvas-region",  "value": "{bg-region}",   "usage": "Semantic: selected text or rows."},
+      {"name": "canvas-active",  "value": "{bg-active}",   "usage": "Semantic: the active mode line / status bar; pressed buttons."},
+      {"name": "canvas-inactive","value": "{bg-inactive}", "usage": "Semantic: inactive status bar; disabled controls."},
+      {"name": "text",           "value": "{fg-main}",     "usage": "Semantic: body text."},
+      {"name": "text-dim",       "value": "{fg-dim}",      "usage": "Semantic: secondary text, timestamps, property values."},
+      {"name": "text-alt",       "value": "{fg-alt}",      "usage": "Semantic: emphasis without bold; the mode line's buffer name."},
+      {"name": "link",           "value": "{blue}",        "usage": "Semantic: links and the primary action."},
+      {"name": "todo",           "value": "{red}",         "usage": "Semantic: the TODO keyword (org-todo face)."},
+      {"name": "done",           "value": "{green}",       "usage": "Semantic: the DONE keyword (org-done face)."},
+      {"name": "tag",            "value": "{cyan}",        "usage": "Semantic: :tags: (org-tag face)."},
+      {"name": "timestamp",      "value": "{fg-dim}",      "usage": "Semantic: <2026-10-03 Sat> (org-date face)."},
+      {"name": "priority",       "value": "{magenta}",     "usage": "Semantic: [#A] priority cookies."},
+      {"name": "signal-error",   "value": "{red}",         "usage": "Semantic: errors."},
+      {"name": "signal-warning", "value": "{yellow}",      "usage": "Semantic: warnings. Modus yellow is a dark ochre in operandi; it is text, never a fill."},
+      {"name": "signal-success", "value": "{green}",       "usage": "Semantic: success."},
+      {"name": "signal-info",    "value": "{cyan}",        "usage": "Semantic: information."},
+      {"name": "border-divider", "value": "{border}",      "usage": "Semantic: hairlines between regions. Decorative: carries no meaning on its own."},
+      {"name": "border-control", "value": "{fg-dim}",      "usage": "Semantic: the outline of inputs, buttons, checkboxes. 7:1, so a control is findable without colour vision."},
+      {"name": "focus-ring",     "value": "{blue}",        "usage": "Semantic: 2px ring, 2px offset, on every focusable thing."}
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "fixed":    "ui-monospace, \"Fira Code\", \"DejaVu Sans Mono\", monospace",
+      "variable": "system-ui, \"Noto Sans\", \"DejaVu Sans\", sans-serif"
+    },
+    "groups": [
+      {"name": "Headline (variable pitch)", "family": "variable", "styles": [
+        {"name": "headline-1", "fontSize": "28px", "lineHeight": "36px", "fontWeight": 700, "usage": "org level-1 headline; HTML h2 after export"},
+        {"name": "headline-2", "fontSize": "22px", "lineHeight": "30px", "fontWeight": 700, "usage": "org level-2 headline"},
+        {"name": "headline-3", "fontSize": "18px", "lineHeight": "26px", "fontWeight": 700, "usage": "org level-3 headline"},
+        {"name": "title",      "fontSize": "34px", "lineHeight": "42px", "fontWeight": 700, "usage": "#+TITLE"}
+      ]},
+      {"name": "Prose (variable pitch)", "family": "variable", "styles": [
+        {"name": "prose",      "fontSize": "16px", "lineHeight": "26px", "fontWeight": 400, "usage": "paragraphs"},
+        {"name": "prose-small","fontSize": "14px", "lineHeight": "22px", "fontWeight": 400, "usage": "footnotes, captions, the tagline"}
+      ]},
+      {"name": "Fixed pitch", "family": "fixed", "styles": [
+        {"name": "code",       "fontSize": "14px", "lineHeight": "22px", "fontWeight": 400, "usage": "src blocks, tables, timestamps, TODO keywords, tags, property drawers, key bindings"},
+        {"name": "code-small", "fontSize": "12px", "lineHeight": "18px", "fontWeight": 400, "usage": "the mode line / status bar, line numbers"}
+      ]}
+    ]
+  },
+  "spacing": {
+    "note": "Two rhythms. Prose uses a 4px scale. Anything fixed-pitch is laid out in character cells (1ch wide, 1lh tall) so it lines up the way a buffer does.",
+    "tokens": [
+      {"name": "space-1", "value": "4px",  "usage": "icon gap, inline padding"},
+      {"name": "space-2", "value": "8px",  "usage": "control padding"},
+      {"name": "space-3", "value": "12px", "usage": "list item padding"},
+      {"name": "space-4", "value": "16px", "usage": "panel padding"},
+      {"name": "space-6", "value": "24px", "usage": "between sections"},
+      {"name": "space-8", "value": "32px", "usage": "page margins"},
+      {"name": "cell-w",  "value": "1ch",  "usage": "one character column in a fixed-pitch region"},
+      {"name": "cell-h",  "value": "1lh",  "usage": "one line in a fixed-pitch region"}
+    ]
+  },
+  "radius": {
+    "tokens": [
+      {"name": "radius-0", "value": "0px", "usage": "Everything by default. Buffers have corners."},
+      {"name": "radius-1", "value": "2px", "usage": "Controls, when a platform insists."}
+    ]
+  }
+}

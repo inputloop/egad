@@ -1,0 +1,166 @@
+#+TITLE: AWAIT: how a page shows that it is waiting
+#+PROPERTY: header-args :mkdirp yes
+
+This file is an egadjit *literate tool*.  A person reads it top to bottom; an agent
+reads the same text; =jit/unpack.py= (or =org-babel-tangle= in Emacs) writes the
+source blocks out as files a client can load.  The prose right above each block is
+its *guidance*: what the form is for and when not to use it.  Clients show the
+guidance before offering a form.
+
+* The category
+
+A page is waiting for something: a peer, a build, a reply, a person.  Emacs shows
+this in the echo area ("Contacting host...") and in the mode line; most web
+applications show a spinner.  Those are two /treatments/ of one /category/, and
+which one a given person should see depends on them: motion sensitivity, a screen
+reader, how dense they like a screen.  When several people share one screen, the
+treatment has to suit all of them.
+
+The declaration below is what =jit/resolve.py= reads.  Every treatment states two
+facts a preference can refuse it on (=motion=, =announces=) and names the forms
+that implement it.  The =baseline= must be acceptable to everyone, by construction:
+no motion, and it announces.
+
+#+BEGIN_SRC json :tangle forest/await.json
+{
+  "category": "await",
+  "baseline": "echo",
+  "order": ["echo", "progress", "pulse", "spinner"],
+  "treatments": {
+    "echo":     {"motion": false, "announces": true,  "forms": ["await/echo.css", "await/echo.js"],
+                 "summary": "One line of text in the status bar, the way the echo area does it."},
+    "progress": {"motion": false, "announces": true,  "forms": ["await/progress.css", "await/progress.js"],
+                 "summary": "A determinate bar with its percentage spoken; needs a known total."},
+    "pulse":    {"motion": false, "announces": false, "forms": ["await/pulse.css"],
+                 "summary": "The waiting region dims and shows a short message; no movement, no announcement."},
+    "spinner":  {"motion": true,  "announces": false, "forms": ["await/spinner.css"],
+                 "summary": "The conventional rotating indicator. Refused by anyone who asked for reduced motion."}
+  }
+}
+#+END_SRC
+
+* Treatment: echo
+:PROPERTIES:
+:header-args+: :tangle await/
+:END:
+
+Text in the status bar.  It needs a =[data-egad-await]= element somewhere on the
+page; the script writes the message into it and sets =aria-live= so a screen reader
+speaks it once.  No colour carries the meaning: the words do.
+
+#+BEGIN_SRC css :tangle await/echo.css
+[data-egad-await] {
+  font-family: var(--egad-font-fixed); font-size: 12px; line-height: 18px;
+  color: var(--egad-text); background: var(--egad-canvas-active);
+  border-top: 1px solid var(--egad-border-divider); padding: 0 2ch; min-height: 18px;
+}
+[data-egad-await]:empty::before { content: "\00a0"; }
+#+END_SRC
+
+#+BEGIN_SRC js :tangle await/echo.js
+// egad await/echo: show a waiting message in the status bar; clear it when done.
+window.egadAwait = window.egadAwait || {};
+window.egadAwait.echo = {
+  begin(message) {
+    const el = document.querySelector("[data-egad-await]");
+    if (!el) return;
+    el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite");
+    el.textContent = message || "Waiting…";
+  },
+  end(message) {
+    const el = document.querySelector("[data-egad-await]");
+    if (el) el.textContent = message || "";
+  }
+};
+#+END_SRC
+
+* Treatment: progress
+:PROPERTIES:
+:header-args+: :tangle await/
+:END:
+
+For waits with a known total.  The bar is a native =<progress>= so the browser and
+assistive technology already know what it is; the script only keeps the value and
+the spoken text in step.
+
+#+BEGIN_SRC css :tangle await/progress.css
+progress[data-egad-await-progress] {
+  inline-size: 100%; block-size: 4px; appearance: none; border: 0;
+  background: var(--egad-canvas-inactive); color: var(--egad-link);
+}
+progress[data-egad-await-progress]::-webkit-progress-bar { background: var(--egad-canvas-inactive); }
+progress[data-egad-await-progress]::-webkit-progress-value { background: var(--egad-link); }
+progress[data-egad-await-progress]::-moz-progress-bar { background: var(--egad-link); }
+#+END_SRC
+
+#+BEGIN_SRC js :tangle await/progress.js
+// egad await/progress: a determinate wait.  update(done, total) keeps value and text in step.
+window.egadAwait = window.egadAwait || {};
+window.egadAwait.progress = {
+  begin(total) {
+    const el = document.querySelector("progress[data-egad-await-progress]");
+    if (!el) return;
+    el.max = total || 1; el.value = 0; el.setAttribute("aria-valuetext", "0 percent");
+  },
+  update(done, total) {
+    const el = document.querySelector("progress[data-egad-await-progress]");
+    if (!el) return;
+    if (total) el.max = total;
+    el.value = done;
+    el.setAttribute("aria-valuetext", Math.round(100 * done / el.max) + " percent");
+  },
+  end() {
+    const el = document.querySelector("progress[data-egad-await-progress]");
+    if (el) { el.value = el.max; el.setAttribute("aria-valuetext", "done"); }
+  }
+};
+#+END_SRC
+
+* Treatment: pulse
+:PROPERTIES:
+:header-args+: :tangle await/
+:END:
+
+The region that is waiting dims to the inactive surface and shows a message.  No
+movement at all, so it suits anyone who asked for reduced motion; but it does not
+announce, so it is refused for screen-reader users unless paired with echo.
+
+#+BEGIN_SRC css :tangle await/pulse.css
+[data-egad-await-pulse] { position: relative; }
+[data-egad-await-pulse][aria-busy="true"] > * { opacity: .55; }
+[data-egad-await-pulse][aria-busy="true"]::after {
+  content: attr(data-egad-await-message); position: absolute; inset: 0;
+  display: grid; place-items: center; font-family: var(--egad-font-fixed);
+  color: var(--egad-text); background: color-mix(in srgb, var(--egad-canvas-inactive) 60%, transparent);
+}
+#+END_SRC
+
+* Treatment: spinner
+:PROPERTIES:
+:header-args+: :tangle await/
+:END:
+
+The rotating indicator people expect.  It moves, so the resolver never picks it for
+a viewer who asked for reduced motion; and the stylesheet itself honours the media
+query as a second line of defence.
+
+#+BEGIN_SRC css :tangle await/spinner.css
+[data-egad-await-spinner] {
+  inline-size: 1lh; block-size: 1lh; border-radius: 50%;
+  border: 2px solid var(--egad-border-divider); border-top-color: var(--egad-link);
+  animation: egad-spin 0.9s linear infinite;
+}
+@keyframes egad-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  [data-egad-await-spinner] { animation: none; border-top-color: var(--egad-border-divider); }
+  [data-egad-await-spinner]::after { content: "\2026"; }
+}
+#+END_SRC
+
+* Try it
+
+The resolver picks a treatment for a set of viewers:
+
+#+BEGIN_SRC sh :tangle no
+python3 jit/resolve.py dist/jit/forest jit/viewers/alice.json jit/viewers/bram.json
+#+END_SRC

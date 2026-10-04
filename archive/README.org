@@ -1,0 +1,87 @@
+#+TITLE: The egad archive node
+#+SUBTITLE: ELPA for the files, .well-known for the discovery, measured trust for the peers
+
+* The protocol, all of it
+
+An ELPA archive is a directory served over HTTP(S):
+
+| file                         | what                                                                 |
+|------------------------------+----------------------------------------------------------------------|
+| =archive-contents=           | =(1 (NAME . [(VERSION) (DEPS) "summary" single/tar EXTRAS]) ...)=    |
+| =archive-contents.sig=       | detached GPG signature, binary                                       |
+| =NAME-VERSION.el=            | a single-file package                                                |
+| =NAME-VERSION.tar=           | a multi-file package with =NAME-VERSION/NAME-pkg.el= inside          |
+| =NAME-VERSION.{el,tar}.sig=  | detached signature per file                                          |
+
+=make-archive.py SRC OUT [--sign KEYID]= writes that directory from a folder of
+=.el= / =.tar= files, reading each package's own headers.  Any static web server is
+then a conforming archive; =egad-node.py= is one that also knows about discovery and
+peers.
+
+* Discovery: =/.well-known/egad=
+
+Every node answers =GET /.well-known/egad= with JSON:
+
+#+BEGIN_SRC json
+{
+  "egad": 1,
+  "node": "egad.example",
+  "role": "public",
+  "archives": [{"name": "egad", "kind": "elpa", "url": "https://egad.example/elpa/",
+                "package_archives_entry": "(\"egad\" . \"https://egad.example/elpa/\")"}],
+  "org_html": {"setupfile": "https://egad.example/org/egad.setup", "css": "https://egad.example/org/egad.css"},
+  "gallery": "https://egad.example/gallery/",
+  "signing_key": {"fingerprint": "ABCD...", "url": "https://egad.example/keys/node.asc"},
+  "transport": {"tls": true, "wireguard_cidr": null},
+  "peers": [{"name": "egadjit.example", "url": "https://10.2.42.1:8443", "fingerprint": "ABCD..."}],
+  "jit": {"index": "https://egadjit.example:8443/jit/jit-index.json", "forms": ".../jit/"}
+}
+#+END_SRC
+
+=jit= appears only on a =trusted= node.  Clients (Emacs, a browser, another node) start
+here and never need to know the layout underneath.
+
+* Peers and the mutual check
+
+=peers.json= lists who you trust: name, URL, the GPG fingerprint you pinned after
+checking it some other way, optionally a CA file for their TLS.  Then:
+
+#+BEGIN_SRC sh
+python3 archive/egad-node.py check-peers egad-node.conf
+#+END_SRC
+
+prints one line per peer: =mutual= (they list you back and their published key
+matches your pin), =one-way= (reachable, key matches, but they do not list you),
+=KEY-MISMATCH= (stop and ask them), or =unreachable=.  Exit status is 0 only when
+every peer is mutual, so it can sit in cron.
+
+* Running the two surfaces
+
+#+BEGIN_SRC sh
+cp archive/egad-node.conf.example egad-node.conf        # role = public, bind your public address, TLS
+cp archive/egad-node.conf.example egadjit-node.conf     # role = trusted, bind = wg, name = egadjit.example
+make                                                     # fills dist/site (unsigned) -- or:
+python3 archive/make-archive.py dist/elpa-src dist/site/elpa --sign YOURKEYID --url https://egad.example/
+gpg --armor --export YOURKEYID > dist/site/keys/node.asc
+python3 archive/egad-node.py serve egad-node.conf &
+python3 archive/egad-node.py serve egadjit-node.conf &
+#+END_SRC
+
+The trusted node serves =dist/= so that =/jit/= (from =jit/unpack.py=) is beside
+=/elpa/= and =/org/=.  Promote a form to the public node by copying it; nothing is
+promoted by default.
+
+* Known gaps
+
+- *url.el and a self-signed trust file.*  Observed with GNU Emacs 29.3 (Debian
+  build, GnuTLS): with =gnutls-trustfiles= set to a self-signed server certificate,
+  =open-network-stream ... :type 'tls= returned no connection and logged no
+  verification message; the same handshake verified with =openssl s_client= against
+  the same file, and succeeded in Emacs when no trust file was set.  The round-trip
+  test therefore pins TLS with openssl and runs =package.el= at
+  =network-security-level 'low=.  Reproduce on your own Emacs build before relying on
+  =gnutls-trustfiles= for a private CA; a public CA via DNS-01 avoids the question.
+- =make-archive.py= reads tar packages but the round-trip test only exercises
+  single-file ones.
+- No mirror sync yet (see =GOVERNANCE.org=).
+- =perms.txt= (who may upload what) is specified in =GOVERNANCE.org= and not enforced.

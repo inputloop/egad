@@ -1,0 +1,4 @@
+{"name": "egad-operandi-theme", "variant": "operandi", "scheme": "light",
+ "package": {"archive": "egad", "name": "egad-operandi-theme"},
+ "source": "tokens/egad-tokens.json", "tokens_version": 1,
+ "screenshot": "screens/egad-operandi.png", "tags": ["modus", "aaa", "org"]}

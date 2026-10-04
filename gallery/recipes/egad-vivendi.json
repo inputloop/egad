@@ -1,0 +1,4 @@
+{"name": "egad-vivendi-theme", "variant": "vivendi", "scheme": "dark",
+ "package": {"archive": "egad", "name": "egad-vivendi-theme"},
+ "source": "tokens/egad-tokens.json", "tokens_version": 1,
+ "screenshot": "screens/egad-vivendi.png", "tags": ["modus", "aaa", "org"]}
